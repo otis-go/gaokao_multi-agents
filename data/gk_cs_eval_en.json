@@ -1,0 +1,278 @@
+{
+  "_comment": "Pedagogical Dimension Evaluation Static Prompt Config (English Version)",
+  "_comment_source": "Translated from data/gk_cs_eval.json",
+  "_description": "This config defines Gaokao (GK) and Curriculum Standard (CS) dimension evaluation prompts. Contains system_prompt, gk_dimensions (GK01-GK17 Core Values & Four-Wing Requirements), cs_dimensions (CS01-CS21 Curriculum Standards). Each dimension has code, id, name, hit_true/hit_false criteria.",
+  "_version": "1.0",
+  "_updated": "2026-01",
+  "system_prompt": "You are an expert in Gaokao Chinese reading comprehension item design and evaluation for \"single items\" (one multiple-choice or one short-answer question).\nYour task: Make binary hit judgments (hit=true/false) for educational assessment dimensions on a given item, with concise, verifiable reasons.\n\nNote: All dimensions must output \"hit or not hit + reason\", no dimension may be omitted;\nDo not use \"routing/mutual exclusion/priority\" to skip or default-handle any dimension. Dimensions may be hit simultaneously, but each must meet its own task evidence threshold.\n\n[Item Type Identification and Evidence Standards (Unified in System Prompt)]\n- If stem contains explicit options (e.g., A/B/C/D or four-choice wording), or answer is an option letter/number → Process as \"multiple-choice\":\n  Use stem's question action and analysis's \"option criteria/error cause explanation/elimination rationale\" as primary evidence.\n- Otherwise → Process as \"short-answer\":\n  Use stem's task requirements and analysis's \"scoring points/point count/structure requirements/scoring basis\" as primary evidence.\n- Regardless of item type, dimension hit must be able to point to \"task action evidence\" in stem/analysis; cannot rely solely on passage topic or common knowledge inference.\n\n[Input Contains]\n- question_id\n- material (reading passage; generally not for judgment basis)\n- stem (question stem/prompt/options)\n- answer (standard answer)\n- analysis (explanation/scoring points)\n\n[Hard Rules (Must Follow)]\n1) Dimension hit can only be based on: stem, answer, analysis.\n2) Material may only be referenced in one case: when analysis explicitly cites/extends specific information from material to explain \"why this question design/why this answer\".\n3) Do not hit just because material topic \"looks like\" a dimension; must point to task requirements or scoring points in stem/analysis that embody the dimension.\n4) Each dimension outputs only binary: hit=true/false; with 1-2 sentence reason. Reason must name observable evidence (e.g., requires comparison, summarization, categorization, condition qualification analysis, whether evidence supports conclusion, scope interpretation, etc.).\n5) No \"dimension chaining\": Do not infer this dimension hits because another dimension hits; each dimension must independently meet threshold.\n6) Mandatory standards:\n   A. \"Just because passage content is related\" cannot justify hit: Must find task evidence in stem/analysis.\n   B. Structure-related dimensions do not require \"structure/function\" wording as threshold: As long as the task essentially involves hierarchical division, relationship judgment, categorization/integration, or correcting structural logic errors, can be judged hit.\n\n[Answer Steps (Execute mentally, do not output steps)]\n- Extract \"task action evidence\" only from stem/analysis/answer.\n- For each dimension, make binary judgment: If stem/analysis explicitly requires that dimension's task action or scoring point, then hit=true; otherwise hit=false.\n- Each dimension's reason must name: What type of \"task action evidence\" from stem or analysis.",
+  "gk_dimensions": [
+    {
+      "code": "GK01",
+      "id": "gk.value_patriotism",
+      "name": "Core Values - Patriotism",
+      "hit_true": "Based on stem/analysis question design and scoring criteria: The item explicitly sets \"national identity/ethnic community/cultural identity/family-state responsibility/relationship between national development and individual choice\" as evaluable objects, requiring completion of the \"evidence→stance interpretation→value judgment\" loop based on textual evidence (facts/examples/concept definitions/argument chains) pointed to by analysis, rather than slogan-style statements or background labeling. Typical distractors/error causes: misplaced evaluation object, missing conditions/scope, absolute degree, reversed causation, equating personal interest with family-state responsibility, etc. Can coordinate with GK10: If the item also requires judging whether the patriotic stance \"can be derived from passage/whether evidence is sufficient\", then GK01+GK10 hit simultaneously (give separate reasons).",
+      "hit_false": "Stem/analysis does not make patriotism a core scoring point: Related words only serve as topic background/title labels, main scoring is still information extraction, general summarization, or pure technique identification; or only requires copying slogans, repeating stance without evidence-based interpretation space; or value orientation slides into narrow nationalism/xenophobic sentiment output."
+    },
+    {
+      "code": "GK02",
+      "id": "gk.value_morality",
+      "name": "Core Values - Moral Cultivation",
+      "hit_true": "Based on stem/analysis: The item locks onto specific ethical situations and behavioral choices, requiring analysis of behavioral motivation, value trade-offs, virtues and consequences (or their boundaries/limits) based on passage evidence, forming a verifiable chain of \"situation—evidence—moral meaning—evaluation/recommendation\". Typical distractors/error causes: misread motivation, overgeneralization, disguising utilitarianism as morality, rationalizing means, ignoring passage limiting conditions. Can coordinate with GK04: If the same item also involves rules/procedures/rights-responsibility reasoning, then GK02 only hits when 'ethical reasoning/virtue evaluation' becomes a scoring chain, GK04 hits when 'rules/procedures/rights-responsibility' becomes a scoring chain (cannot substitute each other).",
+      "hit_false": "Morality vocabulary only decorative and does not form a scoring chain: Key criteria in analysis fall on stylistic terms, information verification, or general summarization; answering can almost be done without textual evidence using common sense; or only requires expressing feelings/general preaching without evidence-based evaluation."
+    },
+    {
+      "code": "GK03",
+      "id": "gk.value_worldview_methodology",
+      "name": "Core Values - Worldview & Methodology",
+      "hit_true": "Based on stem/analysis: The item requires using operable methodological elements (connection/development/contradiction/conditions, historical perspective or systemic perspective, etc.) to explain: How passage viewpoints are established, under what premises/stages they are established, how opposing tensions are handled, how system elements interact, etc.; analysis can point to limiting words, condition chains, opposing terms and their unity conditions, development process clues, etc. in the passage. Boundary with GK10: GK03 focuses on 'which perspective organizes understanding and defines establishment conditions', GK10 focuses on 'whether reasoning is sufficient/whether it crosses boundaries'; if item requires both, GK03+GK10 can coordinate hit.",
+      "hit_false": "Stem/analysis does not form a verifiable methodological task: Only touches on \"dialectical/systemic\" words but core is still information restatement/common sense evaluation/general causal restatement, does not require using methodological perspective to define establishment conditions or tension handling; or simplifies methodology to slogan memorization without evidence and reasoning space."
+    },
+    {
+      "code": "GK04",
+      "id": "gk.value_rule_of_law",
+      "name": "Core Values - Rule of Law Awareness",
+      "hit_true": "Based on stem/analysis: The item makes rules, procedures, rights-responsibility relationships, evidence standards and conclusion matching as core scoring points, requiring completion of \"rule/institutional logic→applicable conditions→conclusion\" reasoning within passage information domain, not memorizing laws. Typical error causes: ignoring procedural conditions, misplacing rights-responsibility subjects, treating exceptions as norms, using moral approval as legality basis. When coordinating with GK02: Must distinguish 'ethical reasoning' from 'rule reasoning' in question design/criteria, otherwise cannot substitute rule of law hit with moral judgment.",
+      "hit_false": "Although legal/rule words appear in stem, they do not constitute main criteria: Analysis focus shifts to general attitude statement, moral evaluation, or content summarization, not requiring rights-responsibility/procedure analysis based on text; or only concept memorization and slogan-style \"law-abiding\"."
+    },
+    {
+      "code": "GK05",
+      "id": "gk.value_people_centered",
+      "name": "Core Values - People-Centered Philosophy",
+      "hit_true": "Based on stem/analysis: In public policy/social governance/livelihood development context, the item makes 'public stance/public nature/fair accessibility/livelihood concerns/sense of gain' as verifiable judgment objects, requiring derivation of their public value meaning from passage facts/data/arguments and making evaluation, avoiding abstract slogans or emotional sympathy replacing analysis. Typical error causes: substituting people's stance with general charity, treating partial interests as public interests, ignoring fairness limiting conditions. Can coordinate with GK01: If same item requires identifying the argument connection or tension between 'national development—people's well-being', and both ends need evidence support, GK05+GK01 can hit simultaneously.",
+      "hit_false": "Only surface-level appearance of \"people/livelihood\" words: Analysis scoring points mainly general understanding, information extraction, or attitude statement; people's stance is not the core of argument and judgment; answering does not need to strictly trace back to evidence; or requires mechanical agreement/disagreement without evidence-based analysis space."
+    },
+    {
+      "code": "GK06",
+      "id": "gk.wings_application",
+      "name": "Four-Wing Requirements - Application",
+      "hit_true": "Based on stem/analysis: The item provides clear task objectives and constraints (object/purpose/conditions/standards/scope/risks, etc.), and requires transferring principles/methods/standards from the passage to the scenario for selection, correction, evaluation, or recommendation, forming a verifiable chain \"passage rule/principle→scenario application→conclusion/solution\". Boundary reminder: If the real-world scenario is merely a wrapper and the task reduces to information extraction/screening or generic judgment—without requiring the test-taker to apply principles or standards from the passage to derive scenario-specific applicability—then it leans toward GK09/GK13 (or GK13 alone) and should not be taken as evidence for GK06.\n Can coordinate with GK09: If same item has both realistic object constraints (GK09) and principle transfer derivation (GK06), then GK09+GK06 hit simultaneously.",
+      "hit_false": "Scenario and task do not constitute application scoring chain in analysis: Mainly falls on viewpoint restatement, isolated knowledge identification, or pure technique training; scenario is just decoration; or task becomes activity planning/performative output, lacking evidence-based 'principle—application—conclusion' derivation in reading comprehension."
+    },
+    {
+      "code": "GK07",
+      "id": "gk.wings_basic",
+      "name": "Four-Wing Requirements - Fundamentals",
+      "hit_true": "Based on stem/analysis: The item controls task complexity and information burden, usually grasps only one core action (summarize/explain/judge key relationship, etc.); correct answer/points can directly correspond to passage key sentence clusters or structural nodes; answering path can be described as \"locate key position→understand→answer\", avoiding obscure details or unfamiliar knowledge thresholds. Distractors/error causes mainly create distinction through slight but substantial shifts in 'scope/degree/condition/object/causation', not word games. Can coordinate with GK13: Fundamentals emphasizes 'typicality and complexity control', not equal to 'just need to locate one sentence'.",
+      "hit_false": "Item task shows multi-layer nested reasoning or high information load; key distinction in analysis depends on obscure background knowledge/highly technique-oriented patterns/gimmick traps; or evidence location unclear, unable to stably trace back to text to complete basic path verification."
+    },
+    {
+      "code": "GK08",
+      "id": "gk.wings_comprehensive",
+      "name": "Four-Wing Requirements - Integration",
+      "hit_true": "Based on stem/analysis: The item requires coordinating multiple pieces of information or multiple relationships to complete the same main task, mobilizing at least two types of information/relationships, with 'integrated judgment' as scoring basis, cannot be completed with single-point verification. Boundary with GK14: GK08 allows 'synthesizing to reach conclusion', GK14 requires 'structured framework/rules/hierarchy/relationship network' output; if stem explicitly requires framework expression, GK08+GK14 can coordinate hit.",
+      "hit_false": "Main scoring points in analysis are single-point recognition/local positioning: Only need to verify one sentence/one detail or general summarization to complete; or task turns to common sense judgment/value statement, almost no need to coordinate passage information to form integrated conclusion."
+    },
+    {
+      "code": "GK09",
+      "id": "gk.context_life_practice",
+      "name": "Context - Real-Life Practice",
+      "hit_true": "Based on stem/analysis: The item treats real-life/social affairs scenario as 'problem-solving constraint elements' rather than background; scenario elements explicitly specify at least two items (object/audience, purpose, conditions, process, risks, scope, or evaluation standards, etc.); and analysis shows that without these scenario constraints, answering cannot be stable. Boundary with GK06: GK09 focuses on whether 'object—purpose—conditions—standards' realistic constraints determine the answer; GK06 focuses on 'passage principle/standard being transferred and used'; both can be in same item but cannot substitute each other. Boundary with GK17: If core is inquiry chain (method/evidence/conclusion/boundary), leans more toward GK17.",
+      "hit_false": "Life topic only serves as decoration: Analysis mainly tests abstract concept understanding or isolated language knowledge; scenario elements have little impact on scoring; or task leans toward literary appreciation/terminology memorization/activity planning, difficult to reflect 'realistic object constraint→information processing/decision'."
+    },
+    {
+      "code": "GK10",
+      "id": "gk.key_ability_cognitive",
+      "name": "Key Ability - Cognitive Thinking Skills",
+      "hit_true": "Based on stem/analysis: The item makes reasoning/argument evaluation as core scoring point, explicitly specifying evaluation object (a viewpoint/an inference/an argument step), requiring judgment of 'can it be derived/is evidence sufficient/is argument chain missing links or substituted/are conditions and boundaries erased/is it over-extended beyond scope', etc.; and can identify typical error causes in analysis (scope expansion/contraction, reversed causation, missing conditions, concept substitution, treating correlation as sufficiency, etc.). Distinction from GK03: GK10 evaluates sufficiency and boundaries; GK03 evaluates methodological perspective and establishment condition organization; Distinction from GK11: If evidence paradigm is data/experiment/mechanism and evaluates evidence quality→conclusion boundaries, then GK11 is more key, but if stem also contains general logical flaw judgment, can coordinate hit.",
+      "hit_false": "Analysis shows answering mainly relies on mechanical positioning and copying or minimal processing: No need to establish relationships, handle condition boundaries, or evaluate reasoning validity; or only guides vague inspiration sharing without evidence constraints."
+    },
+    {
+      "code": "GK11",
+      "id": "gk.subject_literacy_science_thinking",
+      "name": "Subject Literacy - Scientific Thinking",
+      "hit_true": "Based on stem/analysis: The item scores around empirical argumentation and data inference prudence, requiring evaluation of 'whether evidence supports conclusion/whether inference crosses boundaries/whether correlation and causation are confused/whether sample, variable, and control are sufficient/whether mechanism explanation is closed/what are applicable conditions and boundaries'. Prerequisite threshold: Passage that analysis is based on must present evaluable evidence forms (data, observations, experiment/control descriptions, mechanism explanations, sample descriptions, etc.), and stem explicitly requires judgment based on this.",
+      "hit_false": "Science topic is just material background: Scoring points in analysis mainly general understanding or attitude statement, not requiring verification of conclusion or boundary definition based on evidence/data/mechanism; or passage does not provide evaluable evidence forms, difficult to form scientific thinking criteria chain."
+    },
+    {
+      "code": "GK12",
+      "id": "gk.subject_literacy_humanistic_thinking",
+      "name": "Subject Literacy - Humanistic Thinking",
+      "hit_true": "Based on stem/analysis: The item requires meaning interpretation and value understanding within passage context, focusing on cultural/historical context, public spirit, situation and ethical trade-offs, etc., requiring evidence-based completion of 'contextual evidence→meaning interpretation→evaluative judgment (including value tensions/stance comparisons)' rather than emotional statements. Relationship with value categories (GK01-GK05): If item's evaluation object is explicitly limited to a specific core value (such as family-state sentiment, people's stance, etc.), can coordinate hit with corresponding value dimension; but cannot substitute 'humanistic topic is related' for evidence-based interpretation threshold.",
+      "hit_false": "Although question involves humanistic topic, analysis mainly stays at information extraction, general summarization, or slogan-style preaching, lacking contextual explanation, stance comparison, or evidence-based interpretation and evaluation of value tensions."
+    },
+    {
+      "code": "GK13",
+      "id": "gk.subject_literacy_info_get",
+      "name": "Subject Literacy - Information Retrieval",
+      "hit_true": "Based on stem/analysis: The item emphasizes 'retrieval—filtering—organization' strategy, explicitly requiring extraction of information from different parts/different presentation forms of passage (paragraphs, charts, notes, lists, etc.) across at least two locations, making selection among valid/invalid/conflicting information, then completing induction or judgment; analysis can indicate information sources and explain selection rationale; error causes mostly missing/wrong extraction/wrong scope/wrong comparison.",
+      "hit_false": "Although written \"according to passage\" but does not form observable information filtering process: Only need single-point positioning/mechanical copying; or no need to compare and select among multiple information sources; analysis also does not reflect source and selection criteria."
+    },
+    {
+      "code": "GK14",
+      "id": "gk.subject_literacy_integration",
+      "name": "Subject Literacy - Knowledge Integration",
+      "hit_true": "Based on stem/analysis: The item requires producing 'structured integration results' (framework/hierarchy/rules/relationship network, etc.), not simply splicing multiple pieces of information; analysis can explain where structural basis comes from in passage; error causes can be identified as wrong structure/wrong hierarchy/wrong relationship edge/wrong overarching concept. Boundary with GK08: GK08 emphasizes 'synthesizing to reach conclusion', GK14 emphasizes 'providing structure'; if stem explicitly requires framework expression, can coordinate hit.",
+      "hit_false": "Analysis does not require structured integration: Mainly stays at single-point understanding/copying or listing multiple pieces of information in parallel; or although there is multiple information, no need to merge, compare, reorganize; also does not require framework/rules/hierarchy presentation."
+    },
+    {
+      "code": "GK15",
+      "id": "gk.subject_literacy_understanding",
+      "name": "Subject Literacy - Comprehension & Mastery",
+      "hit_true": "Based on stem/analysis: The item makes deep processing understanding as core scoring point, requiring grasping core concept system, key relationship chains and argument structure (viewpoint—evidence—reasoning—qualification) overall organization, and explaining key assertions or structural logic in own words, while being able to trace back to evidence explaining 'why understand this way/how derived from text'; cannot degrade to copying-style understanding. Boundary with GK10: GK15 focuses on 'understanding how structure/relationships are organized' and being able to output understanding reflecting mastery characteristics; GK10 focuses on 'whether argument is sufficient/whether it can be derived/boundary evaluation'; if stem requires both, can coordinate hit.",
+      "hit_false": "Analysis shows understanding and mastery is in subordinate position: Mainly can be completed with common sense judgment, attitude statement, or template answers; text tracing necessity is not strong; or only need to find original sentences/mechanical copying, does not require explaining concept relationships and argument structure."
+    },
+    {
+      "code": "GK16",
+      "id": "gk.subject_literacy_language_expression",
+      "name": "Subject Literacy - Language Expression",
+      "hit_true": "Based on stem/analysis: The item writes 'organization and constraints of expression output' into the task, explicitly specifying expression object/purpose/scope or structure requirements, requiring selection, integration, and structuring based on passage information and specific context (can be presented in multiple ways); evaluation points fall on information completeness, scope consistency, object matching, register appropriateness, and structural clarity.",
+      "hit_false": "Although \"write/speak/express\" appears, lacking object/purpose/scope/structure constraints; or expression does not rely on passage information and becomes feeling-style statements; or turns into template writing training, activity planning, and promotional copy, main line of reading—expression is disconnected."
+    },
+    {
+      "code": "GK17",
+      "id": "gk.context_learning_inquiry",
+      "name": "Context - Learning & Exploration",
+      "hit_true": "Based on stem/analysis: The item organizes tasks around inquiry chain, requiring answering around at least three types of elements: problem/objective, method steps, evidence data (or observational facts), explanatory reasoning, conclusion and boundary reflection, etc.; common questions judge whether method and conclusion match, whether conclusion is supported by evidence, what are applicable scope and condition limitations (all based on passage); analysis can correspond to chain evidence points one by one and explain matching relationships. Distinction from GK09: GK17 is inquiry process constraint, GK09 is real-world affairs constraint; coordination with GK11: If also requires evidence—conclusion correspondence/over-extension boundary scientific evaluation, then GK17+GK11 can hit simultaneously.",
+      "hit_false": "Although passage involves learning/research/science popularization, stem/analysis mainly stays at content summarization or general viewpoint judgment, does not make method—evidence—explanation—conclusion (and boundary) as scoring chain; or writes inquiry as ordinary life background without chain analysis task."
+    }
+  ],
+  "cs_dimensions": [
+    {
+      "code": "CS01",
+      "id": "cs.core_literacy_language_use",
+      "name": "Core Competencies (4D) - Language Construction & Application",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation locks the scoring main line on \"how to say more clearly, appropriately, effectively\" in expression, requiring language construction and choice in specific context (such as rewriting/paraphrasing/compression reorganization/fill-in writing/title creation/register and expression strategy adjustment/optimizing expression to match object-occasion-purpose); and rationale/error causes revolve around expression choice and pragmatic effect, not just restating content. Distinction: If task is only local word/collocation correctness or choosing more appropriate, prioritize CS20; if task is explaining language phenomena/summarizing rules without requiring expression decisions, prioritize CS06. Coordination: When stem requires both \"completing executable expression (CS04)+register appropriateness (CS01)\", both can coexist, but CS01 must show object/occasion/purpose-driven appropriateness criteria.",
+      "hit_false": "Main criteria in stem/explanation not on expression decisions and pragmatic effects: Mainly tests information extraction/summarization (CS13), structural relationships (CS21), evidence support (CS11), or stance evaluation (CS14), etc.; or only terminology memorization/rhetoric name identification, only local word substitution without explaining context basis; or simplifies \"language use\" to context-free rule memorization, lacking expression choice and effect explanation based on context."
+    },
+    {
+      "code": "CS02",
+      "id": "cs.core_literacy_cultural_inheritance",
+      "name": "Core Competencies (4D) - Cultural Inheritance & Understanding",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation requires understanding cultural concepts/spiritual traditions/cultural value orientations under textual evidence constraints, and rationally interpreting or evaluating their connotations and stance significance (can point to arguments/facts/discourse clues in passage), not just expressing attitudes or memorizing common knowledge. Distinction: If focus is on \"cultural context/historical background causing difference reasons explanation (ancient-modern/Chinese-foreign perspective)\", should prioritize CS19 (can coexist with CS02); if only \"traditional culture topic content viewpoint discussion and contemporary significance\" and stem explicitly locks on traditional culture topic, can coordinate with CS07.",
+      "hit_false": "Cultural elements only serve as topic background or decoration: Stem/explanation mainly still general understanding, information verification, or attitude statement, lacking locatable evidence-based interpretation/evaluation; or makes task into slogan-style agreement or disagreement/activity-style output, cannot form \"textual evidence→cultural understanding→evaluative judgment\" verifiable chain."
+    },
+    {
+      "code": "CS03",
+      "id": "cs.core_literacy_thinking_development",
+      "name": "Core Competencies (4D) - Thinking Development & Enhancement",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation puts the scoring main line on reasoning processing and logic correction, requiring completion of comparison, inference, analysis, condition/scope/causal chain verification, concept substitution identification, overgeneralization/over-inference correction, etc. under evidence constraints; and can point out \"why valid/not valid\" reasoning links or boundary conditions. Distinction: If core is \"whether viewpoint/conclusion is supported by passage evidence, what are boundaries\", prioritize CS11; CS03 needs additional explicit criteria for reasoning chain/condition boundary. Coordination: When coexisting with CS11, CS11 focuses on the evidence–conclusion support/boundary, while CS03 focuses on the internal reasoning chain/condition boundaries/logic correction; when coexisting with CS21, CS21 grasps structural relationship types and functions, CS03 grasps internal reasoning criteria for whether the conclusion is valid.",
+      "hit_false": "Answering mainly relies on mechanical positioning and copying, single-point recognition, or common sense statement; stem/explanation does not require handling limiting conditions, reasoning chains, or logical error types; or only requires summarizing main idea/extracting points (CS13) without needing to complete inference and correction based on evidence."
+    },
+    {
+      "code": "CS04",
+      "id": "cs.task_group_practical",
+      "name": "Learning Task Cluster - Practical Reading & Communication",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation locks main task as transactional information processing and executable communication, requiring selection of key conditions/processes/scopes based on passage and transformation into executable expression (objects, steps, precautions, standards, risk warnings, etc.); scoring points fall on \"selecting information accurately + expressing clearly and usably\". Coordination: When coexisting with CS13, CS13 manages extracting key conditions/nodes, CS04 manages organizing information into executable expression; when coexisting with CS01, CS04 uses executability/standardization as main criteria, CS01 only supplements register appropriateness and clarity.",
+      "hit_false": "Although has real-world scenario packaging, stem/explanation main criteria turns to document format clause memorization, template writing, abstract preaching, or general language polishing; does not require transforming condition/process information into executable expression; or directly turns into full essay writing training, lacking \"read→select accurately→express clearly\" scoring loop."
+    },
+    {
+      "code": "CS05",
+      "id": "cs.task_group_cross_media",
+      "name": "Learning Task Cluster - Cross-Media Reading & Communication",
+      "hit_true": "Stem/analysis only based on stem and explanation: Passage presented in two or more carriers/modalities (text+charts/data/flowcharts/screenshots, etc.); and stem/explanation mandatorily requires cross-carrier correspondence, verification, or integrated conclusions (cannot answer stably without crossing carriers); scoring points can be located to comparison/alignment relationships or scope differences between at least two different carrier information. Distinction: If only \"has multiple materials\" but does not involve cross-carrier alignment, leans toward CS09; if only single-carrier summarization, leans toward CS13.",
+      "hit_false": "Charts/multi-modal only appears formally, but stem/explanation mainly still general understanding or single-point verification, does not require establishing cross-carrier correspondence to answer; or actually only has single carrier material, so-called \"cross-media\" does not constitute main scoring criteria."
+    },
+    {
+      "code": "CS06",
+      "id": "cs.task_group_language_inquiry",
+      "name": "Learning Task Cluster - Language Accumulation, Organization & Inquiry",
+      "hit_true": "Stem/analysis only based on stem and explanation: Takes specific sentences/expression phenomena as objects, requiring analysis of words, sentence patterns, register, rhetoric/expression strategies, etc. in context, and explaining rules, error cause mechanisms, or appropriateness basis (can include comparison, induction, diagnosis); scoring points on \"using context to explain language phenomena/rules\", not just reporting terminology names. Distinction: If only doing \"choose more appropriate/judge correctness\" word choice questions with weak explanation, leans toward CS20; if requiring expression rewriting decisions, leans toward CS01. Boundary reminder: If the task only asks to parse a complex sentence for extracting information—without explaining any linguistic phenomenon/rule or error mechanism—then it leans toward CS13 or CS21 rather than CS06.",
+      "hit_false": "Core scoring points in stem/explanation not on contextualized language inquiry: Mostly terminology memorization, topic/value evaluation, or general content understanding; even if language points appear, lacks requirement to return to context to explain rules/error causes; or does mechanical grammar questions divorced from context, difficult to reflect inquiry nature."
+    },
+    {
+      "code": "CS07",
+      "id": "cs.task_group_traditional_culture",
+      "name": "Learning Task Cluster - Chinese Traditional Culture Seminar",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation locks task as seminar on traditional culture-related concepts/spirit/thought resources, requiring integration of viewpoints based on textual evidence and making interpretation, comparison, or contemporary significance evaluation, not just pointing out cultural elements. Distinction: If core is cultural literacy's value understanding and stance evaluation, leans more toward CS02; if core is \"contextual reasons/ancient-modern Chinese-foreign perspective explaining differences\", leans more toward CS19 (can coexist).",
+      "hit_false": "Traditional culture elements only serve as material decoration or fun presentation: Task stays at information extraction, correctness judgment, or common knowledge memorization; lacks evidence-based interpretation and seminar discussion; or turns into activity planning/slogan-style praise, replacing reading comprehension and evidence criteria."
+    },
+    {
+      "code": "CS08",
+      "id": "cs.ability_comparative_dialectical",
+      "name": "Chinese Language Ability - Comparative Reading & Dialectical Judgment",
+      "hit_true": "Stem/analysis only based on stem and explanation: Premise of two or more comparable materials; stem/explanation requires cross-text comparison of similarities and differences and making comprehensive judgment, emphasizing condition awareness and dialectical selection (not simple side-taking or listing similarities/differences); answer/explanation can reflect \"comparison dimension→basis→comprehensive conclusion (including boundary conditions)\". Coordination: When coexisting with CS09, CS09 emphasizes multi-material evidence coordination and integration, CS08 emphasizes dialectical comprehensive judgment after comparison; when coexisting with CS19, CS19 provides contextual reason explanation to support judgment; if the comparison task critically depends on cross-carrier alignment (e.g., chart/data scope alignment), it may also coexist with CS05.",
+      "hit_false": "Formally multiple materials, but stem/explanation mainly still single-text information extraction, concept explanation, or shallow similarity/difference listing; lacks comprehensive judgment and condition boundaries; or materials not comparable, judgment mainly relies on common knowledge or stance statement."
+    },
+    {
+      "code": "CS09",
+      "id": "cs.ability_multi_material",
+      "name": "Chinese Language Ability - Multi-Material Integration",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation explicitly requires synthesizing multiple materials (can include text-image combinations) and using multiple pieces of evidence to complete integrated expression; needs to filter key information among multiple materials, establish correspondence/mutual evidence relationships, or integrate to form conclusion/basis; answer/explanation must substantially mobilize multiple material locations, cannot complete by reading only one. Distinction: If integration occurs at cross-carrier (text+charts, etc.) alignment level and alignment is main line, leans toward CS05; if output is required to be outline/framework form, may coordinate with CS17.",
+      "hit_false": "Although multiple materials given, stem/explanation shows reading one can answer, material connection is weak or integration is only surface-level listing; explanation/answer's use of multi-material coordination is insufficient; or task focus turns to knowledge points/activity-style expression."
+    },
+    {
+      "code": "CS10",
+      "id": "cs.ability_rhetoric_effect",
+      "name": "Chinese Language Ability - Literary Technique Identification & Effect Analysis",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation requires identifying expression strategies/explanation methods/argumentation strategies, etc., and analyzing their functions and effects in combination with specific sentences or structural positions; scoring points on \"strategy→how to achieve information clarity/persuasiveness/rigor\" evidence-based explanation, not just reporting names. Distinction: If further requires evaluating whether argumentation is sufficient, rigorous, and pointing out gaps/supplementary evidence, leans more toward CS15; if item main line is overall structural relationships and progression function, may coordinate with CS21.",
+      "hit_false": "Stem/explanation only requires pointing out names or making general praise-style evaluation (not tracing back to sentence evidence); or expression techniques are only incidental information, main criteria on main idea summarization/information verification/stance statement, etc."
+    },
+    {
+      "code": "CS11",
+      "id": "cs.ability_claim_evidence",
+      "name": "Chinese Language Ability - Viewpoint-Material Relationship",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation requires judging \"viewpoint/conclusion—evidence material\" support, limitation, or weakening relationships, and identifying boundaries/gaps (whether evidence matches, whether sufficient, whether over-extended, whether missing limiting conditions, etc.); scoring points can fall on corresponding material points and 'why supports/does not support' verifiable explanation. Distinction: Only doing 'whether original text has/misattribution' information verification usually does not count; must show \"can it be derived/insufficient basis/crossing boundary/boundary conditions\" criteria. Coordination: When coexisting with CS15, can first do support relationship judgment (CS11), then explain why that evidence/method is insufficient (CS15), avoiding only discussing method without falling on support relationship.",
+      "hit_false": "Stem/explanation mainly stays at fact verification, paraphrase consistency, or detail positioning; does not make \"whether evidence supports viewpoint/what are boundaries\" as main criteria; or task turns to content summarization, inspiration sharing, etc., does not need to establish clear evidence—conclusion correspondence."
+    },
+    {
+      "code": "CS12",
+      "id": "cs.ability_transfer_application",
+      "name": "Chinese Language Ability - Transfer Application of Methods & Language Rules",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation requires extracting methods/step strategies/language rules or judgment standards from passage, and transferring to new scenarios to complete judgment, correction, analysis, or optimization suggestions; answer/explanation reflects \"according to passage principle/rule→landing on new object\" correspondence. Coordination: If transfer object is transactional executable expression, can coexist with CS04; if transfer object is language phenomenon rule explanation, can coexist with CS06.",
+      "hit_false": "Although \"method/rule\" words appear, only stays at memorization or general experience level, lacks stable rule invocation and contextualized landing criteria; or task is only content understanding/viewpoint summarization/terminology judgment, cannot reflect extracting from passage and transferring to solve new tasks."
+    },
+    {
+      "code": "CS13",
+      "id": "cs.ability_keyinfo_prioritization",
+      "name": "Chinese Language Ability - Key Information Extraction & Priority Summarization",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation requires filtering key information, summarizing core viewpoints/main content, and distinguishing primary from secondary; emphasizes information compression, point coverage, and structured presentation (can integrate across sentences and paragraphs); scoring points fall on \"grasping main trunk, removing branches\". Coordination: When coexisting with CS04, CS13 provides key conditions/nodes, CS04 is responsible for organizing into executable expression; when coexisting with CS17, CS17 requires outputting framework/hierarchy, CS13 leans more toward content point primary-secondary compression.",
+      "hit_false": "Stem/explanation mainly tests detail positioning, terminology memorization, common sense judgment, or value evaluation; passage too short/structure too simple leading to no need for real filtering and integration; or so-called \"summarization\" is only copying original sentences, not reflecting primary-secondary organization and compression."
+    },
+    {
+      "code": "CS14",
+      "id": "cs.ability_stance_identification",
+      "name": "Chinese Language Ability - Stance Identification & Evaluation",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation requires identifying author's or different subjects' viewpoint stances/attitude orientations, and analyzing their basis and reasonableness in combination with passage evidence, completing relatively objective evaluation and judgment (not pure emotional side-taking). Distinction: If evaluation focus turns to \"whether evidence supports viewpoint/boundaries\", leans more toward CS11; CS14 needs to reflect identification and evaluation dimension of the stance itself (such as orientation differences, reasonableness and bias points).",
+      "hit_false": "Although 'views/stance/attitude' words appear, core task is still content restatement or common sense judgment; only needs simple statement without textual evidence support; or turns to propaganda slogans/emotional opposition judgment."
+    },
+    {
+      "code": "CS15",
+      "id": "cs.ability_argumentation",
+      "name": "Chinese Language Ability - Argument Method Identification & Assessment",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation requires locating arguments and evidence/evidence types, identifying argumentation methods (example, contrast, causation, citation, classification, etc.) or explaining how they function, and evaluating sufficiency, rigor, aptness (pointing out gaps, missing links, overgeneralization, supplementary/alternative evidence direction, etc.); rationale needs to trace back to textual evidence. Distinction: If only doing expression technique/explanation method \"function analysis\" without involving sufficiency/rigor evaluation, leans toward CS10; when coexisting with CS11, CS11 first judges support relationship and boundaries, CS15 then explains 'why this evidence/method is insufficient'.",
+      "hit_false": "Stem/explanation only requires memorizing terminology names, simple correctness judgment, or content summarization; lacks analysis and evaluation of argumentation method/evidence type and effect, sufficiency, rigor; or passage and task itself does not constitute argumentation structure."
+    },
+    {
+      "code": "CS16",
+      "id": "cs.ability_issue_discussion",
+      "name": "Chinese Language Ability - Topic Argumentation",
+      "hit_true": "Stem/analysis main judgment scope: Stem/explanation requires proposing viewpoints around clear topic within limited scope and organizing rationale and evidence to form concise argumentation/analysis, reflecting argument—rationale—evidence structure and condition awareness; and evidence needs to trace back to passage (not a full essay). Coordination: When coexisting with CS02/CS07, cultural understanding can serve as argumentation basis but still must be evidence-based.",
+      "hit_false": "Passage only serves as topic introduction: Answering mainly restates passage, writes general feelings, or makes vague statements; argumentation structure and evidence support requirements are weak; or task turns to full essay writing/publicity planning, etc., not short argumentation driven by reading evidence."
+    },
+    {
+      "code": "CS17",
+      "id": "cs.ability_outline_generation",
+      "name": "Chinese Language Ability - Structural Organization & Outline Generation",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation explicitly requires organizing hierarchies and logical relationships and generating outline/framework/grouping structure; output format has constraints on structural clarity (hierarchical numbering, grouping dimensions, correspondence relationships, etc.); reflects \"understand structure→merge and layer→framework presentation\". Distinction: Only requiring bullet-point summarization without needing hierarchy/grouping does not count; leans more toward CS13. Coordination: When coexisting with CS21, CS21 is responsible for identifying relationship types and functions, CS17 is responsible for organizing relationships into visual framework output; when coexisting with CS09, CS09 provides multi-material coordination evidence, CS17 is responsible for framework presentation.",
+      "hit_false": "Bullet points/sections only formal requirements: Substance is still general summarization or copying, no need for layering and grouping to complete; or task core is knowledge memorization, attitude statement, detail verification, etc., unrelated to outline/framework generation."
+    },
+    {
+      "code": "CS18",
+      "id": "cs.ability_concept_definition_consistency",
+      "name": "Chinese Language Ability - Concept Definition & Consistent Usage",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation requires integrating key concept meanings, applicable conditions and scope, and judging whether before-and-after expressions are consistent, whether mixed-use substitution or unclear definition occurs, completing \"definition—comparison—judgment\" task chain; answering depends on contextual comparison and limiting condition analysis, not memorizing definitions. Coordination: If concept definition needs to first understand key sentence scope/negation limitations, if further discussing whether concept's use in argumentation causes argumentation gaps, can coexist with CS15.",
+      "hit_false": "Although concepts/terminology appear, main criteria turns to structure organization, emotional attitude evaluation, background common knowledge, etc.; concept consistency only incidentally mentioned; or divorced from context requiring written definitions, listing terminology slogans without verifying usage consistency in text."
+    },
+    {
+      "code": "CS19",
+      "id": "cs.ability_cultural_context_historical_perspective",
+      "name": "Chinese Language Ability - Cultural Context & Historical-Modern Interpretation",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation requires combining cultural context information provided by text (historical background, customs and institutions, conceptual systems, etc.) to explain cultural phenomenon's connotation and causes, and making ancient-modern/Chinese-foreign perspective comparison to explain difference reasons and value orientations, forming \"context—cause—comparison—evaluation\" evidence-based explanation chain. Distinction: If only making cultural value judgment without explaining contextual causes, leans more toward CS02; if stem core is comprehensive judgment and conditions after comparison, CS08 is main, CS19 provides reason explanation support (can coexist).",
+      "hit_false": "Stem/explanation has weak requirements for cultural context explanation and multi-perspective comparison: Mostly stays at general content summarization or common sense judgment; lacks text-based cause explanation and comparative analysis; or divorced from reading evidence making slogan-style value statement and cultural common knowledge memorization."
+    },
+    {
+      "code": "CS20",
+      "id": "cs.ability_word_collocation_accuracy",
+      "name": "Chinese Language Ability - Vocabulary & Collocation Accuracy",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation locks main task as \"contextualized accuracy judgment\", requiring appropriateness review of content words/function words/idioms/fixed collocations/connectives, etc. (subtle semantic differences, commendatory/derogatory tone, collocation objects and scope, inter-sentence connection and logical relationships); and can explain 'why inappropriate/more appropriate' and give rationale or error cause type based on context. Distinction: If elevated to \"object/occasion/purpose\" register appropriateness decisions and overall expression construction, leans more toward CS01; Coordination: When coexisting with CS06, CS20 is responsible for giving judgment (correctness/better choice), CS06 is responsible for using rules to explain reasons, avoiding only selecting answers without explaining.",
+      "hit_false": "Core of stem/explanation not on contextualized word usage review: Can answer divorced from context using only definitions; or task turns to content understanding, viewpoint judgment, writing techniques; or even only doing word explanation/idiom differentiation/collocation memorization and other knowledge Q&A, lacking \"verify by context—explain reason\" scoring loop."
+    },
+    {
+      "code": "CS21",
+      "id": "cs.ability_structure_logic",
+      "name": "Chinese Language Ability - Structure & Logic Organization and Functions",
+      "hit_true": "Stem/analysis only based on stem and explanation: Stem/explanation requires identifying structural levels and logical relationships (general-specific, parallel, progressive, causal, contrast, transition, connection and echo, etc.), and pointing out corresponding clues (connectives, references, paragraph functions, example positions, etc.) and their function in promoting expression clarity/argumentation rigor; answer/explanation reflects \"relationship type (or equivalent description)+clue identification+function explanation\" loop, not using 'structure/function' wording as threshold. Coordination: When coexisting with CS03, CS21 grasps structural relationship types and functions, CS03 grasps reasoning chains and condition boundaries.",
+      "hit_false": "Although paragraph/level is mentioned in stem/explanation, mainly stays at general content understanding or information verification; does not require identifying and explaining structural-logical relationships and their functions, structure organization is only incidental; or question almost does not involve the three elements of relationship type, clue, and function."
+    }
+  ]
+}

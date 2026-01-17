@@ -1,0 +1,291 @@
+{
+  "_comment": "AI维度评估静态提示词配置文件 (v5) - 供 ai_centric_eval.py 使用 | AI Dimension Evaluation Static Prompt Config (v5) - for ai_centric_eval.py",
+  "_comment_en": "This config defines scoring rubrics and prompts for AI-centric quality evaluation of generated questions (objective/subjective types). Includes: score_mappings, system_prompts, dimension_prompts, output_constraints, anchor_validation_rules.",
+  "_version": "5.0",
+  "_updated": "2025-12",
+  "_changelog": "v5: E1-补齐每档判据; E2-全维度增加锚点; E3-统一N为有效误读路径数 | v5: E1-Complete level criteria; E2-Add anchors to all dimensions; E3-Unify N as valid misreading path count",
+
+  "score_mappings": {
+    "objective": {
+      "stem_quality": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "1", "score": 20},
+          {"label": "2", "score": 40},
+          {"label": "3", "score": 60},
+          {"label": "4", "score": 80},
+          {"label": "5", "score": 100}
+        ]
+      },
+      "option_exclusivity_coverage": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "0", "score": 0},
+          {"label": "1", "score": 50},
+          {"label": "2", "score": 75},
+          {"label": "3", "score": 100}
+        ]
+      },
+      "guessing_lower_asymptote": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "接近送分题", "score": 0},
+          {"label": "明显易蒙对", "score": 30},
+          {"label": "略易蒙对", "score": 60},
+          {"label": "正常四选一", "score": 85},
+          {"label": "控制良好（难以蒙对）", "score": 100}
+        ]
+      },
+      "distractor_headroom": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "0", "score": 0},
+          {"label": "1", "score": 50},
+          {"label": "2", "score": 75},
+          {"label": "3", "score": 100}
+        ]
+      },
+      "answer_uniqueness": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "不唯一", "score": 0},
+          {"label": "次唯一/开放", "score": 70},
+          {"label": "唯一", "score": 100}
+        ]
+      },
+      "fairness_regional_gender": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "高", "score": 0},
+          {"label": "中", "score": 60},
+          {"label": "低", "score": 100}
+        ]
+      },
+      "item_evidence_sufficiency": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "0", "score": 0},
+          {"label": "1", "score": 50},
+          {"label": "2", "score": 75},
+          {"label": "3", "score": 100}
+        ]
+      }
+    },
+    "subjective": {
+      "stem_quality": {
+        "weight": 0.25,
+        "type": "levels",
+        "levels": [
+          {"label": "1", "score": 20},
+          {"label": "2", "score": 40},
+          {"label": "3", "score": 60},
+          {"label": "4", "score": 80},
+          {"label": "5", "score": 100}
+        ]
+      },
+      "fairness_regional_gender": {
+        "weight": 0.25,
+        "type": "levels",
+        "levels": [
+          {"label": "高", "score": 0},
+          {"label": "中", "score": 60},
+          {"label": "低", "score": 100}
+        ]
+      },
+      "rubric_operational": {
+        "weight": 0.25,
+        "type": "levels",
+        "levels": [
+          {"label": "0", "score": 0},
+          {"label": "40", "score": 40},
+          {"label": "70", "score": 70},
+          {"label": "85", "score": 85},
+          {"label": "100", "score": 100}
+        ]
+      },
+      "item_evidence_sufficiency": {
+        "weight": 0.25,
+        "type": "levels",
+        "levels": [
+          {"label": "0", "score": 0},
+          {"label": "1", "score": 50},
+          {"label": "2", "score": 75},
+          {"label": "3", "score": 100}
+        ]
+      }
+    }
+  },
+
+  "system_prompts": {
+    "objective": "你是\"高考语文阅读理解（客观题）题目质量评估员\"。你将对一题四选一客观题进行质量盲评。\n\n必须遵守：\n1) 仅依据输入中的【材料/题干/选项】判断，不得使用外部常识或臆测\"标准答案/官方解析\"。\n2) reason 必须可回扣材料（可用短引号或关键词），且控制在 1–2 句。若题干点名课内经典篇目/名篇名句（如《种树郭橐驼传》），允许调用常识性课内记忆，不视为越界；但仍应优先回扣题干与材料给出的信息。\n3) 你必须严格输出 JSON（不加 Markdown、不加多余字段），逐维度给出 level 与 reason。\n4) 每个维度的 reason 必须包含该维度要求的\"锚点字段\"（半角符号，格式严格）——缺失锚点将被判 INVALID 并要求重评。",
+
+    "subjective": "你是\"高考语文阅读理解（主观题）题目质量评估员\"。你将对一题主观题（简答/分析类）进行质量盲评。\n\n必须遵守：\n1) 仅依据输入中的【材料/题干】判断；不预设\"标准答案/评分细则\"，也不引入材料外信息。\n2) 允许\"常规语文阅读的必要推断\"（如指代、关系、论证链条）——但不允许越过材料做事实补充或凭空引申。\n3) 若题干点名课内经典篇目/名篇名句（如《种树郭橐驼传》），允许调用常识性课内记忆，不视为越界；但仍应优先回扣题干与材料给出的信息。\n4) reason 必须可回扣材料或题干（可短引号/关键词），且控制在 1–2 句。\n5) 你必须严格输出 JSON（不加 Markdown、不加多余字段），逐维度给出 level 与 reason。\n6) 每个维度的 reason 必须包含该维度要求的\"锚点字段\"（半角符号，格式严格）——缺失锚点将被判 INVALID 并要求重评。"
+  },
+
+  "dimension_prompts": {
+    "objective": {
+      "stem_quality": {
+        "prompt_eval": "【维度】题干质量（stem_quality，客观题）\n【level 取值与判据】\n- 5：任务完全清晰——对象、范围、动作、条件（含否定词）全部明确，无歧义。\n- 4：任务基本清晰——四要素齐全但存在轻微模糊（如范围略宽泛），不影响作答方向。\n- 3：任务可理解——有 1 处要素缺失或不明（如动作词可多解），需考生略做推断。\n- 2：任务欠清——有 2 处要素缺失或自相矛盾，考生易误读任务。\n- 1：任务不清——关键要素严重缺失或多重歧义，无法确定考查意图。\n【锚点要求】reason 必须包含：\n  任务动作词=<动词>; 范围/对象=<名词短语>\n  （两项都要，缺一则 INVALID）\n【输出】reason 1–2 句：先写锚点，再点出\"清晰点/问题点\"各 1 个。",
+        "allowed_levels": ["1", "2", "3", "4", "5"],
+        "level_default": "3",
+        "anchor_required": true,
+        "anchor_pattern": "任务动作词=.+;\\s*范围/对象=.+"
+      },
+      "option_exclusivity_coverage": {
+        "prompt_eval": "【维度】选项同轴性与覆盖（option_exclusivity_coverage，客观题）\n【level 取值与判据】\n- 3：四选项完全同轴——均在同一判断维度上，覆盖典型错因（如\"偷换/以偏/无中生有\"），无异轴项。\n- 2：基本同轴——有 1 项轻微偏轴或错因覆盖稍窄，但主体仍可比。\n- 1：部分同轴——有 1–2 项明显异轴（如一项讲原因、一项讲结果）或错因严重重叠。\n- 0：严重异轴——选项各说各话，无法在同一维度比较，或多项可同时为真/假。\n【锚点要求】reason 必须包含：\n  竞争轴=<轴名称>; <选项对>=<关系>\n  （如 \"竞争轴=信息理解; B与C=近同义\"）\n【输出】reason 1–2 句：先写锚点，再说明覆盖或偏轴情况。",
+        "allowed_levels": ["0", "1", "2", "3"],
+        "level_default": "2",
+        "anchor_required": true,
+        "anchor_pattern": "竞争轴=.+;\\s*[A-D]与?[A-D]=.+"
+      },
+      "distractor_headroom": {
+        "prompt_eval": "【维度】干扰项区分度/有效误读路径数（distractor_headroom，客观题）\n【定义】N = 有效误读路径数（即考生可能因不同错因而选中该错项的路径条数；不同错因算不同路径）。\n【level 取值与判据】\n- 3：N≥3——至少 3 条有效误读路径，每条可被材料证据区分，干扰项设计优秀。\n- 2：N=2——2 条有效误读路径，干扰项有一定区分度。\n- 1：N=1——仅 1 条有效误读路径，干扰项较弱或重叠。\n- 0：N=0——无有效误读路径，干扰项形同虚设或与正确项无法区分。\n【锚点要求】reason 必须包含：\n  N=<0-3>\n  （N=3 表示 ≥3 条）\n【输出】reason 1–2 句：先写锚点 N=?，再举 1 条典型误读路径（引用或关键词）。",
+        "allowed_levels": ["0", "1", "2", "3"],
+        "level_default": "2",
+        "anchor_required": true,
+        "anchor_pattern": "N\\s*=\\s*[0-3]"
+      },
+      "guessing_lower_asymptote": {
+        "prompt_eval": "【维度】蒙对下限（guessing_lower_asymptote，客观题）\n【定义】K = 不读材料也能被强形式线索排除的选项数（0–3）。\n【level 取值与判据】\n- 控制良好（难以蒙对）：K=0，四项均需读材料才能判断，无形式线索可排除。\n- 正常四选一：K=0–1，偶有轻微形式差异但不足以显著提高蒙对率。\n- 略易蒙对：K=1–2，有 1–2 项因形式线索（长度/语气/常识）可被排除。\n- 明显易蒙对：K=2–3，多项可被排除，蒙对率显著高于 25%。\n- 接近送分题：K≥3，几乎可裸蒙正确答案。\n【锚点要求】reason 必须包含：\n  K=<0-3>\n  （K=3 表示 ≥3 个强可排除项）\n【输出】reason 1–2 句：先写锚点 K=?，再说明可排除项的形式线索来源。",
+        "allowed_levels": ["控制良好（难以蒙对）", "正常四选一", "略易蒙对", "明显易蒙对", "接近送分题"],
+        "level_default": "正常四选一",
+        "anchor_required": true,
+        "anchor_pattern": "K\\s*=\\s*[0-3]"
+      },
+      "answer_uniqueness": {
+        "prompt_eval": "【维度】答案唯一性（answer_uniqueness，客观题）\n【定义】先从题干识别“判定方向/选取目标”T，再计算 |C|。\n- T=题干要求考生选出的那类选项（如“正确的一项/符合的一项/能推出的一项”或“错误的一项/不正确的一项/不符合的一项/不能推出的一项/最不恰当的一项”等）。\n- C=在材料证据下，严格满足 T 的候选选项集合；|C| 为其规模。\n  说明：若 T 为否定式（错误/不正确/不符合/不能/最不…），则“进入 C”的标准是：材料能给出明确反证/矛盾点/违背条件点，使该选项在材料约束下确定属于 T 指向的类别；不要把“其它选项被支持为正确”误计入 C。\n\n【level 取值与判据】\n- 唯一：|C|=1，在题干的判定方向 T 上，有且仅有一项可被材料严格判定为满足 T（即为唯一可选答案）。\n- 次唯一/开放：|C|=0，在判定方向 T 上，材料证据不足以把任何一项严格判定为满足 T（信息不足/边界不清）。\n- 不唯一：|C|≥2，在判定方向 T 上，有 2 项及以上可被材料同时严格判定为满足 T（出现多解/双解）。\n\n【锚点要求】reason 必须包含：\n  T=<判定方向>; |C|=<0-4>\n（若只保留一个硬锚点，至少包含 |C|=<0-4>，但推荐同时写 T 以避免“问错选对”的误判。）\n\n【输出】reason 1–2 句：先写锚点（T=…; |C|=?），再指出支持“入 C/出 C”的关键证据点（短引号或关键词），必要时点名导致多解/无法锁定的冲突位置。",
+        "allowed_levels": ["唯一", "次唯一/开放", "不唯一"],
+        "level_default": "唯一",
+        "anchor_required": true,
+        "anchor_pattern": "\\|C\\|\\s*=\\s*[0-4]"
+      },
+      "fairness_regional_gender": {
+        "prompt_eval": "【维度】公平性：地域/性别/群体偏见风险（fairness_regional_gender，客观题）\n【level 取值与判据】\n- 低：未发现歧视、刻板印象、地域门槛或需材料外身份经验才能作答的设计。\n- 中：存在轻微敏感表述或地域知识需求，但不影响绝大多数考生公平作答。\n- 高：存在明确歧视性表述、刻板印象，或严重依赖特定地域/群体经验。\n【锚点要求】\n- 若 level=低，reason 必须包含模板句：\"未发现可引用触发点\"\n- 若 level≠低，reason 必须用短引号给出触发片段\n【输出】reason 1–2 句：按上述要求输出。",
+        "allowed_levels": ["低", "中", "高"],
+        "level_default": "低",
+        "anchor_required": true,
+        "anchor_pattern": "未发现可引用触发点",
+        "anchor_condition": "level=低"
+      },
+      "item_evidence_sufficiency": {
+        "prompt_eval": "【维度】题目证据充分性/自足性（item_evidence_sufficiency，客观题）,若题干点名课内经典篇目/名篇名句（如《种树郭橐驼传》），允许调用常识性课内记忆，不视为越界\n【level 取值与判据】\n- 3：完全自足——题干设问与选项判断均可由材料证据闭环支持，无需外部信息。\n- 2：基本自足——有 1 处需轻度必要推断（如指代消解），但材料提供了足够线索。\n- 1：部分自足——有 1–2 处证据缺口（材料未交代但需判断），需考生补充常识或推测。\n- 0：严重不足——关键判断点材料完全未交代，或需大量外部事实/背景才能作答。\n【锚点要求】\n- 若 level≤1（部分自足或更低），reason 必须包含：缺口点=<具体缺口>\n- 若 level≥2（基本自足或更高），reason 必须包含：闭环证据=<证据点>\n【输出】reason 1–2 句：先写锚点，再简述理由。",
+        "allowed_levels": ["0", "1", "2", "3"],
+        "level_default": "2",
+        "anchor_required": true,
+        "anchor_pattern": "(缺口点=.+|闭环证据=.+)"
+      }
+    },
+    "subjective": {
+      "stem_quality": {
+        "prompt_eval": "【维度】题干质量（stem_quality，主观题）\n【level 取值与判据】\n- 5：任务完全清晰——对象、范围、动作、要求全部明确，无歧义。\n- 4：任务基本清晰——四要素齐全但存在轻微模糊，不影响作答方向。\n- 3：任务可理解——有 1 处要素缺失或不明，需考生略做推断。\n- 2：任务欠清——有 2 处要素缺失或自相矛盾，考生易误读任务。\n- 1：任务不清——关键要素严重缺失或多重歧义，无法确定考查意图。\n【锚点要求】reason 必须包含：\n  任务动作词=<动词>; 范围/对象=<名词短语>\n  （两项都要，缺一则 INVALID）\n【输出】reason 1–2 句：先写锚点，再点出\"清晰点/问题点\"各 1 个。",
+        "allowed_levels": ["1", "2", "3", "4", "5"],
+        "level_default": "3",
+        "anchor_required": true,
+        "anchor_pattern": "任务动作词=.+;\\s*范围/对象=.+"
+      },
+      "rubric_operational": {
+        "prompt_eval": "【维度】评分可操作性（rubric_operational，主观题）\n【定义】\n- m = 可识别得分要点数（题目天然可拆出的稳定得分点）\n- n = 明确边界数（要点之间或与非要点之间的可判定边界）\n【level 取值与判据】\n- 100：m≥3 且 n≥2——要点丰富、边界清晰，不同考生答案可被一致判分。\n- 85：m≥2 且 n≥1——要点充足、有基本边界，判分基本一致。\n- 70：m=2 且 n=0，或 m=1 且 n≥1——要点较少或边界模糊，判分可能有争议。\n- 40：m=1 且 n=0——仅 1 个要点且无边界，判分高度主观。\n- 0：m=0——无法识别得分要点，纯泛泛而谈/价值表态类。\n【锚点要求】reason 必须包含：\n  要点数=<m>; 边界数=<n>\n  （两项都要，缺一则 INVALID）\n【输出】reason 1–2 句：先写锚点，再说明要点与边界情况。",
+        "allowed_levels": ["0", "40", "70", "85", "100"],
+        "level_default": "70",
+        "anchor_required": true,
+        "anchor_pattern": "要点数=\\d+;\\s*边界数=\\d+"
+      },
+      "fairness_regional_gender": {
+        "prompt_eval": "【维度】公平性：地域/性别/群体偏见风险（fairness_regional_gender，主观题）\n【level 取值与判据】\n- 低：未发现歧视、刻板印象、地域门槛或需材料外身份经验才能作答的设计。\n- 中：存在轻微敏感表述或地域知识需求，但不影响绝大多数考生公平作答。\n- 高：存在明确歧视性表述、刻板印象，或严重依赖特定地域/群体经验。\n【锚点要求】\n- 若 level=低，reason 必须包含模板句：\"未发现可引用触发点\"\n- 若 level≠低，reason 必须用短引号给出触发片段\n【输出】reason 1–2 句：按上述要求输出。",
+        "allowed_levels": ["低", "中", "高"],
+        "level_default": "低",
+        "anchor_required": true,
+        "anchor_pattern": "未发现可引用触发点",
+        "anchor_condition": "level=低"
+      },
+      "item_evidence_sufficiency": {
+        "prompt_eval": "【维度】题目证据充分性/自足性（item_evidence_sufficiency，主观题）,若题干点名课内经典篇目/名篇名句（如《种树郭橐驼传》），允许调用常识性课内记忆，不视为越界\n【level 取值与判据】\n- 3：完全自足——题干设问可由材料证据闭环支持，无需外部信息。\n- 2：基本自足——有 1 处需轻度必要推断，但材料提供了足够线索。\n- 1：部分自足——有 1–2 处证据缺口（材料未交代但需回答），需考生补充常识或推测。\n- 0：严重不足——关键回答点材料完全未交代，或需大量外部事实/背景才能作答。\n【锚点要求】\n- 若 level≤1（部分自足或更低），reason 必须包含：缺口点=<具体缺口>\n- 若 level≥2（基本自足或更高），reason 必须包含：闭环证据=<证据点>\n【输出】reason 1–2 句：先写锚点，再简述理由。",
+        "allowed_levels": ["0", "1", "2", "3"],
+        "level_default": "2",
+        "anchor_required": true,
+        "anchor_pattern": "(缺口点=.+|闭环证据=.+)"
+      }
+    }
+  },
+
+  "output_constraints": "【输出要求（必须严格遵守）】\n1) 只输出一个 JSON 对象；不要输出任何解释性文字；不要输出 markdown 代码块。\n2) JSON 顶层必须且只能包含一个字段：\"dimensions\"\n3) \"dimensions\" 必须包含上述维度列表中的全部维度 id（一个不少，一个不多），key 必须与维度 id 完全一致。\n4) 每个维度对象必须且只能包含两个字段：\n   - \"level\": 字符串，必须 EXACT MATCH 允许列表之一（保持原样，包括数字、斜杠、空格等）\n   - \"reason\": 中文 1-2 句，必须包含该维度要求的锚点字段\n5) 禁止输出 score；禁止输出数值区间（如\"70-85\"）；禁止输出自造标签。\n6) 若不确定，请直接输出该维度的 level_default。\n7) 【重要】reason 缺少锚点字段将被判 INVALID 并要求重评！",
+
+  "anchor_validation_rules": {
+    "stem_quality": {
+      "regex": "任务动作词=.+;\\s*范围/对象=.+",
+      "required_always": true,
+      "description": "必须包含 任务动作词=...; 范围/对象=..."
+    },
+    "option_exclusivity_coverage": {
+      "regex": "竞争轴=.+;\\s*[A-D]与?[A-D]=.+",
+      "required_always": true,
+      "description": "必须包含 竞争轴=...; 选项对=关系"
+    },
+    "answer_uniqueness": {
+      "regex": "\\|C\\|\\s*=\\s*([0-9]+)",
+      "required_always": true,
+      "level_mapping": {
+        "1": "唯一",
+        "0": "次唯一/开放",
+        "ge2": "不唯一"
+      },
+      "description": "必须包含 |C|=<0-4>"
+    },
+    "distractor_headroom": {
+      "regex": "N\\s*=\\s*([0-3])",
+      "required_always": true,
+      "level_mapping": {
+        "3": "3",
+        "2": "2",
+        "1": "1",
+        "0": "0"
+      },
+      "description": "必须包含 N=<0-3>，N为有效误读路径数"
+    },
+    "guessing_lower_asymptote": {
+      "regex": "K\\s*=\\s*([0-3])",
+      "required_always": true,
+      "level_mapping": {
+        "0": ["控制良好（难以蒙对）", "正常四选一"],
+        "1": ["正常四选一", "略易蒙对"],
+        "2": ["略易蒙对", "明显易蒙对"],
+        "3": ["明显易蒙对", "接近送分题"]
+      },
+      "description": "必须包含 K=<0-3>，K为可被形式线索排除的选项数"
+    },
+    "fairness_regional_gender": {
+      "low_templates": ["未发现可引用触发点"],
+      "risk_terms_regional": ["区域门槛", "地方知识", "方言", "地方政策", "地方习俗", "区域特有经验"],
+      "risk_terms_stereo": ["刻板印象", "歧视", "歧视性表述", "污名化", "侮辱", "贬损", "负面绑定", "地域黑"],
+      "description": "level=低时必须包含 '未发现可引用触发点'；level≠低时必须有引号触发片段"
+    },
+    "item_evidence_sufficiency": {
+      "regex_low": "缺口点=.+",
+      "regex_high": "闭环证据=.+",
+      "level_condition": {
+        "low_levels": ["0", "1"],
+        "high_levels": ["2", "3"]
+      },
+      "description": "level≤1时必须包含 缺口点=...；level≥2时必须包含 闭环证据=..."
+    },
+    "rubric_operational": {
+      "regex": "要点数=\\d+;\\s*边界数=\\d+",
+      "required_always": true,
+      "level_validation": {
+        "100": {"m_min": 3, "n_min": 2},
+        "85": {"m_min": 2, "n_min": 1},
+        "70": {"m_min": 1, "n_min": 0},
+        "40": {"m_min": 1, "n_min": 0},
+        "0": {"m_min": 0, "n_min": 0}
+      },
+      "description": "必须包含 要点数=m; 边界数=n"
+    }
+  }
+}

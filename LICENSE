@@ -1,0 +1,72 @@
+MIT License
+
+Copyright (c) 2025 Wang Hongbo
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--------------------------------------------------------------------------------
+
+DATA LICENSE ADDENDUM / 数据许可附录
+
+The dataset files in the `data/` directory (particularly `raw_material.json`)
+are subject to additional terms and are NOT covered by the MIT License above.
+
+data/ 目录下的数据集文件（特别是 raw_material.json）受以下附加条款约束，
+不适用上述 MIT 许可证：
+
+1. ACADEMIC USE ONLY / 仅限学术使用
+   The dataset is provided exclusively for academic research, educational
+   purposes, and non-commercial use.
+
+   数据集仅供学术研究、教育教学及非商业用途使用。
+
+2. ORIGINAL COPYRIGHT / 原始版权
+   The original examination questions are copyrighted by the National Education
+   Examinations Authority of China (教育部考试中心). This project does not claim
+   ownership of the original content.
+
+   原始考试题目的版权归中华人民共和国教育部考试中心所有。
+   本项目不主张对原始内容的所有权。
+
+3. NO REDISTRIBUTION FOR COMMERCIAL USE / 禁止商业再分发
+   Users may not redistribute the dataset for commercial purposes or include
+   it in commercial products without obtaining appropriate licenses from
+   the original copyright holders.
+
+   未经原始版权持有人适当许可，用户不得将数据集用于商业目的再分发
+   或将其包含在商业产品中。
+
+4. CITATION REQUIREMENT / 引用要求
+   Publications using this dataset should cite both this project and
+   acknowledge the original data source (Chinese Gaokao examinations).
+
+   使用本数据集的出版物应引用本项目并注明原始数据来源（中国高考试题）。
+
+5. DISCLAIMER / 免责声明
+   The dimension annotations and experimental results are provided "as is"
+   without warranty. They represent the project team's professional judgment
+   and do not constitute official or authoritative assessments.
+
+   维度标注和实验结果按"原样"提供，不作任何保证。
+   它们代表项目团队的专业判断，不构成官方或权威评估。
+
+For commercial licensing inquiries regarding the dataset, please contact
+the project maintainer.
+
+关于数据集的商业许可咨询，请联系项目维护者。
