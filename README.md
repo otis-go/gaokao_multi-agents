@@ -36,8 +36,6 @@ On macOS/Linux, use `cp .env.example .env` instead of `copy`.
 
 4. Stage2 evaluator ensemble is configured in `src/shared/api_config.py` via `STAGE2_EVAL_MODELS` and `STAGE2_MODEL_WEIGHTS`. Keep the defaults if you want to reproduce the current evaluator setup.
 
-Never commit `.env`. Generated outputs, logs, caches, and local analysis spreadsheets are ignored by `.gitignore`.
-
 ## CLI Reference
 
 | Mode | Purpose | Example |
@@ -96,8 +94,6 @@ python tools/check_static_alignment.py
 python scripts/extract_questions.py --help
 python -m compileall -q run.py src scripts tools output_analysis
 ```
-
-If `tools/check_static_alignment.py` creates `outputs/audit`, remove it before committing.
 
 ## Project Structure
 
