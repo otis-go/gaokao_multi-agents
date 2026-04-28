@@ -1,0 +1,40 @@
+# =============================================================================
+# Gaokao multi-agent question generation framework dependencies
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Core dependencies
+# -----------------------------------------------------------------------------
+
+# OpenAI API client and OpenAI-compatible providers such as DMX and DeepSeek.
+openai>=1.0.0
+
+# Schema validation.
+pydantic>=2.0.0
+
+# Progress bars for batch runs.
+tqdm>=4.0.0
+
+# -----------------------------------------------------------------------------
+# Optional provider SDKs
+# -----------------------------------------------------------------------------
+
+# Google Gemini. Install only when using Google models.
+# google-genai>=0.1.0
+
+# Anthropic Claude. Install only when using Claude models.
+# anthropic>=0.18.0
+
+# Environment variable loading. The project also works without this package when
+# environment variables are already provided by the shell or deployment platform.
+# python-dotenv>=1.0.0
+
+# -----------------------------------------------------------------------------
+# Development-only dependencies
+# -----------------------------------------------------------------------------
+
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+# black>=23.0.0
+# isort>=5.0.0
+# mypy>=1.0.0

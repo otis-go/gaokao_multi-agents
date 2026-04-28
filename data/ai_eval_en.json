@@ -1,0 +1,292 @@
+{
+  "_comment": "AI Dimension Evaluation Static Prompt Config (v5) - English Version",
+  "_comment_source": "Translated from data/ai_eval.json",
+  "_description": "This config defines scoring rubrics and prompts for AI-centric quality evaluation of generated questions (objective/subjective types). Includes: score_mappings, system_prompts, dimension_prompts, output_constraints, anchor_validation_rules.",
+  "_version": "5.0",
+  "_updated": "2026-01",
+  "_changelog": "v5: E1-Complete level criteria; E2-Add anchors to all dimensions; E3-Unify N as valid misreading path count",
+
+  "score_mappings": {
+    "objective": {
+      "stem_quality": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "1", "score": 20},
+          {"label": "2", "score": 40},
+          {"label": "3", "score": 60},
+          {"label": "4", "score": 80},
+          {"label": "5", "score": 100}
+        ]
+      },
+      "option_exclusivity_coverage": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "0", "score": 0},
+          {"label": "1", "score": 50},
+          {"label": "2", "score": 75},
+          {"label": "3", "score": 100}
+        ]
+      },
+      "guessing_lower_asymptote": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "Near free points", "score": 0},
+          {"label": "Easily guessable", "score": 30},
+          {"label": "Slightly guessable", "score": 60},
+          {"label": "Normal 4-choice", "score": 85},
+          {"label": "Well controlled (hard to guess)", "score": 100}
+        ]
+      },
+      "distractor_headroom": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "0", "score": 0},
+          {"label": "1", "score": 50},
+          {"label": "2", "score": 75},
+          {"label": "3", "score": 100}
+        ]
+      },
+      "answer_uniqueness": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "Not unique", "score": 0},
+          {"label": "Semi-unique/Open", "score": 70},
+          {"label": "Unique", "score": 100}
+        ]
+      },
+      "fairness_regional_gender": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "High risk", "score": 0},
+          {"label": "Medium risk", "score": 60},
+          {"label": "Low risk", "score": 100}
+        ]
+      },
+      "item_evidence_sufficiency": {
+        "weight": 0.142857,
+        "type": "levels",
+        "levels": [
+          {"label": "0", "score": 0},
+          {"label": "1", "score": 50},
+          {"label": "2", "score": 75},
+          {"label": "3", "score": 100}
+        ]
+      }
+    },
+    "subjective": {
+      "stem_quality": {
+        "weight": 0.25,
+        "type": "levels",
+        "levels": [
+          {"label": "1", "score": 20},
+          {"label": "2", "score": 40},
+          {"label": "3", "score": 60},
+          {"label": "4", "score": 80},
+          {"label": "5", "score": 100}
+        ]
+      },
+      "fairness_regional_gender": {
+        "weight": 0.25,
+        "type": "levels",
+        "levels": [
+          {"label": "High risk", "score": 0},
+          {"label": "Medium risk", "score": 60},
+          {"label": "Low risk", "score": 100}
+        ]
+      },
+      "rubric_operational": {
+        "weight": 0.25,
+        "type": "levels",
+        "levels": [
+          {"label": "0", "score": 0},
+          {"label": "40", "score": 40},
+          {"label": "70", "score": 70},
+          {"label": "85", "score": 85},
+          {"label": "100", "score": 100}
+        ]
+      },
+      "item_evidence_sufficiency": {
+        "weight": 0.25,
+        "type": "levels",
+        "levels": [
+          {"label": "0", "score": 0},
+          {"label": "1", "score": 50},
+          {"label": "2", "score": 75},
+          {"label": "3", "score": 100}
+        ]
+      }
+    }
+  },
+
+  "system_prompts": {
+    "objective": "You are a \"Gaokao Chinese Reading Comprehension (Objective Questions) Quality Evaluator\". You will conduct a blind quality evaluation of a four-choice objective question.\n\nMandatory rules:\n1) Judge only based on the input [Passage/Stem/Options]. Do not use external knowledge or assume \"standard answers/official explanations\".\n2) The reason must be traceable to the passage (use short quotes or keywords), limited to 1-2 sentences. If the stem references classic curriculum texts/famous quotes (e.g., \"Biography of Guo Tuotuo, the Tree Planter\"), you may use common curriculum knowledge without it being considered out of bounds; but still prioritize information from the stem and passage.\n3) You must strictly output JSON (no Markdown, no extra fields), providing level and reason for each dimension.\n4) Each dimension's reason must include the required \"anchor fields\" (half-width symbols, strict format) - missing anchors will be marked INVALID and require re-evaluation.",
+
+    "subjective": "You are a \"Gaokao Chinese Reading Comprehension (Subjective Questions) Quality Evaluator\". You will conduct a blind quality evaluation of a subjective question (short answer/analysis type).\n\nMandatory rules:\n1) Judge only based on the input [Passage/Stem]. Do not assume \"standard answers/scoring rubrics\" or introduce information outside the passage.\n2) \"Necessary inferences for standard Chinese reading\" are allowed (e.g., reference resolution, relationships, argument chains) - but do not supplement facts or extend beyond the passage.\n3) If the stem references classic curriculum texts/famous quotes (e.g., \"Biography of Guo Tuotuo, the Tree Planter\"), you may use common curriculum knowledge without it being considered out of bounds; but still prioritize information from the stem and passage.\n4) The reason must be traceable to the passage or stem (use short quotes/keywords), limited to 1-2 sentences.\n5) You must strictly output JSON (no Markdown, no extra fields), providing level and reason for each dimension.\n6) Each dimension's reason must include the required \"anchor fields\" (half-width symbols, strict format) - missing anchors will be marked INVALID and require re-evaluation."
+  },
+
+  "dimension_prompts": {
+    "objective": {
+      "stem_quality": {
+        "prompt_eval": "[Dimension] Stem Quality (stem_quality, objective)\n[Level Values and Criteria]\n- 5: Task completely clear - object, scope, action, conditions (including negations) all explicit, no ambiguity.\n- 4: Task basically clear - all four elements present but with slight vagueness (e.g., scope slightly broad), does not affect answer direction.\n- 3: Task understandable - 1 element missing or unclear (e.g., action word has multiple interpretations), requires slight inference from test-taker.\n- 2: Task unclear - 2 elements missing or self-contradictory, test-taker likely to misread the task.\n- 1: Task not clear - critical elements severely missing or multiple ambiguities, cannot determine assessment intent.\n[Anchor Requirements] reason must include:\n  task_action=<verb>; scope/object=<noun phrase>\n  (Both required, missing either is INVALID)\n[Output] reason 1-2 sentences: Write anchors first, then point out 1 \"clear point\" and 1 \"problem point\".",
+        "allowed_levels": ["1", "2", "3", "4", "5"],
+        "level_default": "3",
+        "anchor_required": true,
+        "anchor_pattern": "task_action=.+;\\s*scope/object=.+"
+      },
+      "option_exclusivity_coverage": {
+        "prompt_eval": "[Dimension] Option Exclusivity and Coverage (option_exclusivity_coverage, objective)\n[Level Values and Criteria]\n- 3: Four options completely coaxial - all on the same judgment dimension, covering typical error causes (e.g., \"substitution/overgeneralization/fabrication\"), no off-axis items.\n- 2: Basically coaxial - 1 item slightly off-axis or error cause coverage slightly narrow, but main body still comparable.\n- 1: Partially coaxial - 1-2 items clearly off-axis (e.g., one discusses cause, another discusses result) or error causes severely overlap.\n- 0: Severely off-axis - options talk past each other, cannot compare on same dimension, or multiple items can be simultaneously true/false.\n[Anchor Requirements] reason must include:\n  competition_axis=<axis name>; <option pair>=<relationship>\n  (e.g., \"competition_axis=information understanding; B&C=near-synonymous\")\n[Output] reason 1-2 sentences: Write anchors first, then explain coverage or off-axis situation.",
+        "allowed_levels": ["0", "1", "2", "3"],
+        "level_default": "2",
+        "anchor_required": true,
+        "anchor_pattern": "competition_axis=.+;\\s*[A-D]&?[A-D]=.+"
+      },
+      "distractor_headroom": {
+        "prompt_eval": "[Dimension] Distractor Discrimination/Valid Misreading Paths (distractor_headroom, objective)\n[Definition] N = number of valid misreading paths (i.e., paths where test-takers might choose a wrong option due to different error causes; different causes count as different paths).\n[Level Values and Criteria]\n- 3: N≥3 - at least 3 valid misreading paths, each distinguishable by passage evidence, excellent distractor design.\n- 2: N=2 - 2 valid misreading paths, distractors have some discrimination.\n- 1: N=1 - only 1 valid misreading path, distractors are weak or overlapping.\n- 0: N=0 - no valid misreading paths, distractors are ineffective or indistinguishable from correct answer.\n[Anchor Requirements] reason must include:\n  N=<0-3>\n  (N=3 means ≥3 paths)\n[Output] reason 1-2 sentences: Write anchor N=? first, then give 1 typical misreading path (quote or keywords).",
+        "allowed_levels": ["0", "1", "2", "3"],
+        "level_default": "2",
+        "anchor_required": true,
+        "anchor_pattern": "N\\s*=\\s*[0-3]"
+      },
+      "guessing_lower_asymptote": {
+        "prompt_eval": "[Dimension] Guessing Lower Bound (guessing_lower_asymptote, objective)\n[Definition] K = number of options that can be eliminated by strong formal cues without reading the passage (0-3).\n[Level Values and Criteria]\n- Well controlled (hard to guess): K=0, all four options require reading the passage to judge, no formal cues for elimination.\n- Normal 4-choice: K=0-1, occasional slight formal differences but insufficient to significantly increase guessing rate.\n- Slightly guessable: K=1-2, 1-2 options can be eliminated by formal cues (length/tone/common knowledge).\n- Easily guessable: K=2-3, multiple options can be eliminated, guessing rate significantly higher than 25%.\n- Near free points: K≥3, can almost guess the correct answer blindly.\n[Anchor Requirements] reason must include:\n  K=<0-3>\n  (K=3 means ≥3 strongly eliminable options)\n[Output] reason 1-2 sentences: Write anchor K=? first, then explain the formal cue source for eliminable options.",
+        "allowed_levels": ["Well controlled (hard to guess)", "Normal 4-choice", "Slightly guessable", "Easily guessable", "Near free points"],
+        "level_default": "Normal 4-choice",
+        "anchor_required": true,
+        "anchor_pattern": "K\\s*=\\s*[0-3]"
+      },
+      "answer_uniqueness": {
+        "prompt_eval": "[Dimension] Answer Uniqueness (answer_uniqueness, objective)\n[Definition] First identify the \"judgment direction/selection target\" T from the stem, then calculate |C|.\n- T = the type of option the stem requires the test-taker to select (e.g., \"correct/matching/can be inferred\" or \"incorrect/not correct/does not match/cannot be inferred/least appropriate\", etc.).\n- C = the set of candidate options that strictly satisfy T under passage evidence; |C| is its size.\n  Note: If T is negative (incorrect/not correct/does not match/cannot/least...), the criterion for \"entering C\" is: the passage provides clear counter-evidence/contradiction/condition violation that definitively places the option in the category T points to; do not mistakenly count \"other options being supported as correct\" into C.\n\n[Level Values and Criteria]\n- Unique: |C|=1, in judgment direction T, exactly one option can be strictly determined by passage to satisfy T (i.e., the only selectable answer).\n- Semi-unique/Open: |C|=0, in judgment direction T, passage evidence is insufficient to strictly determine any option as satisfying T (insufficient information/unclear boundaries).\n- Not unique: |C|≥2, in judgment direction T, 2 or more options can simultaneously be strictly determined by passage to satisfy T (multiple solutions exist).\n\n[Anchor Requirements] reason must include:\n  T=<judgment direction>; |C|=<0-4>\n(If only keeping one hard anchor, at least include |C|=<0-4>, but recommend also writing T to avoid \"asking wrong but answering right\" misjudgment.)\n\n[Output] reason 1-2 sentences: Write anchors first (T=...; |C|=?), then point out key evidence supporting \"entering C/leaving C\" (short quotes or keywords), and if necessary, name the conflict location causing multiple solutions/inability to lock.",
+        "allowed_levels": ["Unique", "Semi-unique/Open", "Not unique"],
+        "level_default": "Unique",
+        "anchor_required": true,
+        "anchor_pattern": "\\|C\\|\\s*=\\s*[0-4]"
+      },
+      "fairness_regional_gender": {
+        "prompt_eval": "[Dimension] Fairness: Regional/Gender/Group Bias Risk (fairness_regional_gender, objective)\n[Level Values and Criteria]\n- Low risk: No discrimination, stereotypes, regional barriers, or designs requiring identity/experience outside the passage to answer.\n- Medium risk: Slight sensitive expressions or regional knowledge requirements, but does not affect fair answering for most test-takers.\n- High risk: Clear discriminatory expressions, stereotypes, or heavy reliance on specific regional/group experience.\n[Anchor Requirements]\n- If level=Low risk, reason must include template: \"No quotable trigger found\"\n- If level≠Low risk, reason must quote the trigger fragment in quotes\n[Output] reason 1-2 sentences: Output according to above requirements.",
+        "allowed_levels": ["Low risk", "Medium risk", "High risk"],
+        "level_default": "Low risk",
+        "anchor_required": true,
+        "anchor_pattern": "No quotable trigger found",
+        "anchor_condition": "level=Low risk"
+      },
+      "item_evidence_sufficiency": {
+        "prompt_eval": "[Dimension] Item Evidence Sufficiency/Self-containment (item_evidence_sufficiency, objective). If the stem references classic curriculum texts/famous quotes (e.g., \"Biography of Guo Tuotuo, the Tree Planter\"), you may use common curriculum knowledge without it being considered out of bounds.\n[Level Values and Criteria]\n- 3: Completely self-contained - stem question and option judgments can all be supported by passage evidence closure, no external information needed.\n- 2: Basically self-contained - 1 point requires light necessary inference (e.g., reference resolution), but passage provides sufficient clues.\n- 1: Partially self-contained - 1-2 evidence gaps (passage does not address but judgment needed), test-taker needs to supplement common knowledge or guess.\n- 0: Severely insufficient - key judgment points completely unaddressed by passage, or requires extensive external facts/background to answer.\n[Anchor Requirements]\n- If level≤1 (partially self-contained or lower), reason must include: gap_point=<specific gap>\n- If level≥2 (basically self-contained or higher), reason must include: closure_evidence=<evidence point>\n[Output] reason 1-2 sentences: Write anchors first, then briefly explain rationale.",
+        "allowed_levels": ["0", "1", "2", "3"],
+        "level_default": "2",
+        "anchor_required": true,
+        "anchor_pattern": "(gap_point=.+|closure_evidence=.+)"
+      }
+    },
+    "subjective": {
+      "stem_quality": {
+        "prompt_eval": "[Dimension] Stem Quality (stem_quality, subjective)\n[Level Values and Criteria]\n- 5: Task completely clear - object, scope, action, requirements all explicit, no ambiguity.\n- 4: Task basically clear - all four elements present but with slight vagueness, does not affect answer direction.\n- 3: Task understandable - 1 element missing or unclear, requires slight inference from test-taker.\n- 2: Task unclear - 2 elements missing or self-contradictory, test-taker likely to misread the task.\n- 1: Task not clear - critical elements severely missing or multiple ambiguities, cannot determine assessment intent.\n[Anchor Requirements] reason must include:\n  task_action=<verb>; scope/object=<noun phrase>\n  (Both required, missing either is INVALID)\n[Output] reason 1-2 sentences: Write anchors first, then point out 1 \"clear point\" and 1 \"problem point\".",
+        "allowed_levels": ["1", "2", "3", "4", "5"],
+        "level_default": "3",
+        "anchor_required": true,
+        "anchor_pattern": "task_action=.+;\\s*scope/object=.+"
+      },
+      "rubric_operational": {
+        "prompt_eval": "[Dimension] Scoring Operability (rubric_operational, subjective)\n[Definition]\n- m = number of identifiable scoring points (stable scoring points naturally extractable from the item)\n- n = number of clear boundaries (determinable boundaries between points or between points and non-points)\n[Level Values and Criteria]\n- 100: m≥3 and n≥2 - points rich, boundaries clear, different test-takers' answers can be consistently scored.\n- 85: m≥2 and n≥1 - points sufficient, basic boundaries exist, scoring basically consistent.\n- 70: m=2 and n=0, or m=1 and n≥1 - points fewer or boundaries vague, scoring may be disputed.\n- 40: m=1 and n=0 - only 1 point and no boundary, scoring highly subjective.\n- 0: m=0 - no identifiable scoring points, purely general talk/value statement type.\n[Anchor Requirements] reason must include:\n  points=<m>; boundaries=<n>\n  (Both required, missing either is INVALID)\n[Output] reason 1-2 sentences: Write anchors first, then explain points and boundary situation.",
+        "allowed_levels": ["0", "40", "70", "85", "100"],
+        "level_default": "70",
+        "anchor_required": true,
+        "anchor_pattern": "points=\\d+;\\s*boundaries=\\d+"
+      },
+      "fairness_regional_gender": {
+        "prompt_eval": "[Dimension] Fairness: Regional/Gender/Group Bias Risk (fairness_regional_gender, subjective)\n[Level Values and Criteria]\n- Low risk: No discrimination, stereotypes, regional barriers, or designs requiring identity/experience outside the passage to answer.\n- Medium risk: Slight sensitive expressions or regional knowledge requirements, but does not affect fair answering for most test-takers.\n- High risk: Clear discriminatory expressions, stereotypes, or heavy reliance on specific regional/group experience.\n[Anchor Requirements]\n- If level=Low risk, reason must include template: \"No quotable trigger found\"\n- If level≠Low risk, reason must quote the trigger fragment in quotes\n[Output] reason 1-2 sentences: Output according to above requirements.",
+        "allowed_levels": ["Low risk", "Medium risk", "High risk"],
+        "level_default": "Low risk",
+        "anchor_required": true,
+        "anchor_pattern": "No quotable trigger found",
+        "anchor_condition": "level=Low risk"
+      },
+      "item_evidence_sufficiency": {
+        "prompt_eval": "[Dimension] Item Evidence Sufficiency/Self-containment (item_evidence_sufficiency, subjective). If the stem references classic curriculum texts/famous quotes (e.g., \"Biography of Guo Tuotuo, the Tree Planter\"), you may use common curriculum knowledge without it being considered out of bounds.\n[Level Values and Criteria]\n- 3: Completely self-contained - stem question can be supported by passage evidence closure, no external information needed.\n- 2: Basically self-contained - 1 point requires light necessary inference, but passage provides sufficient clues.\n- 1: Partially self-contained - 1-2 evidence gaps (passage does not address but answer needed), test-taker needs to supplement common knowledge or guess.\n- 0: Severely insufficient - key answer points completely unaddressed by passage, or requires extensive external facts/background to answer.\n[Anchor Requirements]\n- If level≤1 (partially self-contained or lower), reason must include: gap_point=<specific gap>\n- If level≥2 (basically self-contained or higher), reason must include: closure_evidence=<evidence point>\n[Output] reason 1-2 sentences: Write anchors first, then briefly explain rationale.",
+        "allowed_levels": ["0", "1", "2", "3"],
+        "level_default": "2",
+        "anchor_required": true,
+        "anchor_pattern": "(gap_point=.+|closure_evidence=.+)"
+      }
+    }
+  },
+
+  "output_constraints": "[Output Requirements (Must strictly follow)]\n1) Only output one JSON object; do not output any explanatory text; do not output markdown code blocks.\n2) JSON top level must and can only contain one field: \"dimensions\"\n3) \"dimensions\" must include all dimension ids from the above dimension list (no more, no less), keys must exactly match dimension ids.\n4) Each dimension object must and can only contain two fields:\n   - \"level\": string, must EXACT MATCH one from the allowed list (keep as-is, including numbers, slashes, spaces, etc.)\n   - \"reason\": 1-2 sentences, must include the anchor fields required by that dimension\n5) Do not output score; do not output numeric ranges (e.g., \"70-85\"); do not output self-created labels.\n6) If uncertain, directly output that dimension's level_default.\n7) [IMPORTANT] Missing anchor fields in reason will be marked INVALID and require re-evaluation!",
+
+  "anchor_validation_rules": {
+    "stem_quality": {
+      "regex": "task_action=.+;\\s*scope/object=.+",
+      "required_always": true,
+      "description": "Must include task_action=...; scope/object=..."
+    },
+    "option_exclusivity_coverage": {
+      "regex": "competition_axis=.+;\\s*[A-D]&?[A-D]=.+",
+      "required_always": true,
+      "description": "Must include competition_axis=...; option pair=relationship"
+    },
+    "answer_uniqueness": {
+      "regex": "\\|C\\|\\s*=\\s*([0-9]+)",
+      "required_always": true,
+      "level_mapping": {
+        "1": "Unique",
+        "0": "Semi-unique/Open",
+        "ge2": "Not unique"
+      },
+      "description": "Must include |C|=<0-4>"
+    },
+    "distractor_headroom": {
+      "regex": "N\\s*=\\s*([0-3])",
+      "required_always": true,
+      "level_mapping": {
+        "3": "3",
+        "2": "2",
+        "1": "1",
+        "0": "0"
+      },
+      "description": "Must include N=<0-3>, N is the number of valid misreading paths"
+    },
+    "guessing_lower_asymptote": {
+      "regex": "K\\s*=\\s*([0-3])",
+      "required_always": true,
+      "level_mapping": {
+        "0": ["Well controlled (hard to guess)", "Normal 4-choice"],
+        "1": ["Normal 4-choice", "Slightly guessable"],
+        "2": ["Slightly guessable", "Easily guessable"],
+        "3": ["Easily guessable", "Near free points"]
+      },
+      "description": "Must include K=<0-3>, K is the number of options eliminable by formal cues"
+    },
+    "fairness_regional_gender": {
+      "low_templates": ["No quotable trigger found"],
+      "risk_terms_regional": ["regional barrier", "local knowledge", "dialect", "local policy", "local customs", "region-specific experience"],
+      "risk_terms_stereo": ["stereotype", "discrimination", "discriminatory expression", "stigmatization", "insult", "disparagement", "negative association", "regional prejudice"],
+      "description": "level=Low risk must include 'No quotable trigger found'; level≠Low risk must have quoted trigger fragment"
+    },
+    "item_evidence_sufficiency": {
+      "regex_low": "gap_point=.+",
+      "regex_high": "closure_evidence=.+",
+      "level_condition": {
+        "low_levels": ["0", "1"],
+        "high_levels": ["2", "3"]
+      },
+      "description": "level≤1 must include gap_point=...; level≥2 must include closure_evidence=..."
+    },
+    "rubric_operational": {
+      "regex": "points=\\d+;\\s*boundaries=\\d+",
+      "required_always": true,
+      "level_validation": {
+        "100": {"m_min": 3, "n_min": 2},
+        "85": {"m_min": 2, "n_min": 1},
+        "70": {"m_min": 1, "n_min": 0},
+        "40": {"m_min": 1, "n_min": 0},
+        "0": {"m_min": 0, "n_min": 0}
+      },
+      "description": "Must include points=m; boundaries=n"
+    }
+  }
+}
