@@ -83,7 +83,7 @@ Parameter Description:
 
 Output:
 - Generated content per question (with data-driven question type)
-- AI-centric evaluation results (three-model ensemble)
+- AI-centric evaluation results (generation-family-decoupled evaluator ensemble)
 - Pedagogical evaluation results
 - summary.json (full mode)
 - subset_unit_ids.json / subset_stats.json (subset mode)
@@ -93,7 +93,7 @@ Core Changes:
 1. Removed manual question type: auto-determined from data
 2. Unified run modes: single or full
 3. Unified LLM control via LLMRouter
-4. Stage 2 dual evaluation shares same three-model group
+4. Stage 2 dual evaluation shares the same decoupled evaluator group
 5. [2025-12] Support stratified subset sampling
 6. [2025-12] Support round-id for organizing multiple runs
 7. [2025-12] CLI does no DataLoader pre-validation
@@ -1056,6 +1056,9 @@ def create_experiment_config(args) -> ExperimentConfig:
     # Save eval_mode to config for subsequent use
     config.eval_mode = eval_mode
     config.baseline_dim_source = getattr(args, "baseline_dim_source", "random") or "random"
+    config.run_mode = args.run_mode
+    config.is_baseline = args.run_mode == "baseline"
+    config.stage1_generation_model = None if args.run_mode in ("baseline", "stage2-only") else config.llm.model_name
 
     return config
 # DEAD_CODE_CANDIDATE(reason=runtime_miss,trace=miss,refs=1)
@@ -1071,6 +1074,24 @@ def _get_overall_score(x):
     if isinstance(x, dict):
         return x.get("overall_score", x.get("total_score"))
     return getattr(x, "overall_score", None)
+
+
+def _detect_stage1_generation_model(*summaries: Optional[Dict[str, Any]]) -> Optional[str]:
+    """Detect the Stage1 generation model from saved experiment metadata."""
+    for summary in summaries:
+        if not isinstance(summary, dict):
+            continue
+        llm_config = summary.get("llm_config", {}) if isinstance(summary.get("llm_config"), dict) else {}
+        config_info = summary.get("config", {}) if isinstance(summary.get("config"), dict) else {}
+        for candidate in (
+            config_info.get("generator_model"),
+            summary.get("generator_model"),
+            llm_config.get("stage1_model"),
+        ):
+            text = str(candidate or "").strip()
+            if text and text.lower() not in {"unknown", "none", "n/a"}:
+                return text
+    return None
 
 
 def _get_overall_score_number(x, default=None):
@@ -2268,7 +2289,8 @@ def run_units(
         "question_type_distribution": question_type_counts,
         "agent_errors": agent_errors,
         "results": all_results,
-        "eval_models": router.get_eval_model_names(),
+        "eval_models": list(getattr(evaluation_orchestrator, "eval_model_names", None) or router.get_eval_model_names()),
+        "model_family_filter": dict(getattr(evaluation_orchestrator, "model_family_filter", {}) or {}),
         # [2025-12 Added] Missing dimension aggregation
         "missing_dims_records": all_missing_dims_records,
         # [2025-12-29 Added] iteration trigger log path
@@ -3097,7 +3119,7 @@ def run_baseline_mode(
         run_mode="baseline",
         config_info={
             "eval_mode": eval_mode,
-            "eval_models": router.get_eval_model_names(),
+            "eval_models": list(getattr(evaluation_orchestrator, "eval_model_names", None) or router.get_eval_model_names()),
         },
     )
 
@@ -3544,7 +3566,8 @@ def run_baseline_mode(
         # Average scores grouped by question type.
         "avg_ai_score_by_question_type": {k: _avg(v["ai"]) for k, v in score_buckets.items() if v["ai"]},
         "question_type_distribution": question_type_counts,
-        "eval_models": router.get_eval_model_names(),
+        "eval_models": list(getattr(evaluation_orchestrator, "eval_model_names", None) or router.get_eval_model_names()),
+        "model_family_filter": dict(getattr(evaluation_orchestrator, "model_family_filter", {}) or {}),
         # Expose model weights.
         "model_weights": model_weights,
         "score_calculation": {
@@ -4694,7 +4717,8 @@ def run_ablation_nodim_mode(
             "is_ablation": True,
         },
         "stage1_skip_agent": "all",
-        "eval_models": STAGE2_EVAL_MODELS,
+        "eval_models": list(getattr(evaluation_orchestrator, "eval_model_names", None) or STAGE2_EVAL_MODELS),
+        "model_family_filter": dict(getattr(evaluation_orchestrator, "model_family_filter", {}) or {}),
         "timestamp": timestamp,
         "results": all_results,
     }
@@ -5058,6 +5082,21 @@ def run_stage2_only_mode(
         print(f"[Stage1 Info] Experiment ID: {stage1_summary.get('experiment_id')}")
         print(f"[Stage1 Info] Generation success: {stage1_summary.get('generation_success')}")
         print(f"[Stage1 Info] Stage2Record count: {stage1_summary.get('stage2_record_count')}")
+
+    full_summary = None
+    full_summary_path = stage1_path / "summary.json"
+    if full_summary_path.exists():
+        try:
+            with open(full_summary_path, "r", encoding="utf-8") as f:
+                full_summary = json.load(f)
+        except Exception as e:
+            print(f"[WARN] Failed to read summary.json for model metadata: {e}")
+
+    detected_generation_model = _detect_stage1_generation_model(stage1_summary, full_summary)
+    if detected_generation_model:
+        config.stage1_generation_model = detected_generation_model
+        config.llm.model_name = detected_generation_model
+        print(f"[Stage1 Info] Generation model: {detected_generation_model}")
 
     router = LLMRouter.from_config(config)
     # Supports incremental AI evaluation mode.
@@ -5602,7 +5641,8 @@ def run_stage2_only_mode(
             "lowfreq_k": existing_exp_type.get("lowfreq_k") or getattr(config, "lowfreq_k", None),
         },
 
-        "eval_models": router.get_eval_model_names(),
+        "eval_models": list(getattr(evaluation_orchestrator, "eval_model_names", None) or router.get_eval_model_names()),
+        "model_family_filter": dict(getattr(evaluation_orchestrator, "model_family_filter", {}) or {}),
         "timestamp": timestamp,
         "results": all_results,
     }

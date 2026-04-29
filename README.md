@@ -12,6 +12,7 @@ Automatic question generation, solving, and evaluation framework for Chinese Gao
 
 - Four-agent Stage1 pipeline: material selection, anchor discovery, question generation/solving, and quality verification.
 - Stage2 evaluation modes: `ai`, `gk`, `cs`, `gk+cs`, `ai+gk`, `ai+cs`, and `ai+gk+cs`.
+- Stage2 automatically removes evaluator models from the same model family as the Stage1 generator.
 - Ablation modes for random dimensions, hard-mixed dimensions, low-frequency dimensions, and no-dimension prompts.
 - Split Stage1 and Stage2 execution for network switching and reproducible evaluation.
 
@@ -35,6 +36,8 @@ On macOS/Linux, use `cp .env.example .env` instead of `copy`.
 3. Stage2 evaluation network routing is configured in `src/shared/api_config.py` by editing `STAGE2_NETWORK`. Use `overseas` for overseas routes and `domestic` for the domestic proxy route.
 
 4. Stage2 evaluator ensemble is configured in `src/shared/api_config.py` via `STAGE2_EVAL_MODELS` and `STAGE2_MODEL_WEIGHTS`. Keep the defaults if you want to reproduce the current evaluator setup.
+
+During Stage2, the framework detects the Stage1 generation model and excludes any evaluator from the same model family. If this leaves two pedagogical evaluators, a dimension is counted as hit only when both evaluators mark it as hit. AI-centric evaluation uses the remaining evaluators with renormalized model weights.
 
 ## CLI Reference
 

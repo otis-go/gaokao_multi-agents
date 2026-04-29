@@ -625,11 +625,13 @@ class PedagogicalHitBasedEval:
         prompt_logger: Optional[PromptLogger] = None,
         dim_mode: str = "gk",
         low_freq_only: bool = False,  # [2026-01 New] Low-frequency dimension experiment mode
+        aggregation_policy: str = "majority",
         **kwargs,  # Ignore other parameters (like data_loader)
     ):
         self.prompt_logger = prompt_logger
         self.dim_mode = dim_mode
         self.low_freq_only = low_freq_only  # [2026-01 New] Save low-freq mode flag
+        self.aggregation_policy = aggregation_policy
 
         # Get dimension list based on low-freq mode
         self.dimensions = get_dimensions_by_mode(dim_mode, low_freq_only=low_freq_only)
@@ -728,8 +730,9 @@ class PedagogicalHitBasedEval:
         if not model_results:
             raise RuntimeError(f"All models failed. audits={audits[:3]}")
 
-        # Aggregate multi-model results: majority voting
+        # Aggregate multi-model results.
         aggregated: Dict[str, Dict[str, Any]] = {}
+        expected_votes = len(self.llm_clients)
         for code in self.dimension_codes:
             hit_votes = 0
             total_votes = 0
@@ -743,8 +746,11 @@ class PedagogicalHitBasedEval:
                 if item.get("reason"):
                     reasons.append(item["reason"])
 
-            # Majority voting determines hit
-            final_hit = hit_votes > total_votes / 2
+            if self.aggregation_policy == "two_model_consensus" and expected_votes == 2:
+                # After generator-family exclusion, the two remaining evaluators must both hit.
+                final_hit = (total_votes == expected_votes and hit_votes == expected_votes)
+            else:
+                final_hit = hit_votes > total_votes / 2
             final_reason = reasons[0] if reasons else "No reason provided"
 
             aggregated[code] = {"hit": final_hit, "reason": final_reason}
@@ -784,7 +790,13 @@ class PedagogicalHitBasedEval:
             f1=f1,
             off_target=off_target,
             model_results=model_results,
-            audit={"model_audits": audits, "models_count": len(self.llm_clients), "dim_mode": self.dim_mode},
+            audit={
+                "model_audits": audits,
+                "models_count": len(self.llm_clients),
+                "models_success": len(model_results),
+                "dim_mode": self.dim_mode,
+                "aggregation_policy": self.aggregation_policy,
+            },
         )
 
     def _normalize_dimensions(self, dimensions: List[str]) -> List[str]:

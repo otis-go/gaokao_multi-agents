@@ -534,8 +534,9 @@ class EvaluationPipelineState:
         # Final decision label (e.g., "pass" / "reject")
         self.final_decision: Optional[str] = kwargs.pop("final_decision", None)
 
-        # [2025-12] Evaluation model triplet (for tracing)
+        # [2025-12] Evaluation model list (for tracing)
         self.eval_models: List[str] = kwargs.pop("eval_models", [])
+        self.model_family_filter: Dict[str, Any] = kwargs.pop("model_family_filter", {})
 
         # [2025-12] Model lists for each evaluation module (always list, empty [] when disabled)
         self.ai_eval_model_names: List[str] = kwargs.pop("ai_eval_model_names", [])

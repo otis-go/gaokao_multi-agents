@@ -31,6 +31,10 @@ from src.evaluation.pedagogical_eval import PedagogicalHitBasedEval
 from src.shared.config import ExperimentConfig
 from src.shared.data_loader import DataLoader
 from src.shared.llm_interface import LLMClient
+from src.shared.model_family import (
+    filter_models_by_generator_family,
+    normalize_weights_for_models,
+)
 from src.shared.prompt_logger import PromptLogger
 from src.shared.schemas import (
     Stage2Record,
@@ -230,6 +234,10 @@ class EvaluationOrchestrator:
             self.eval_model_names = [self.config.llm.model_name]
             self.eval_model_weights = _normalize_weights(self.eval_model_names, None)
 
+        self.generation_model_name = self._resolve_generation_model_name()
+        self.model_family_filter: Dict[str, Any] = {}
+        self._apply_model_family_decoupling()
+
         # ========== Prompt logger (critical fix: no longer use output_dir.parent) ==========
         prompt_log_dir = (Path(self.config.output_dir) / "logs" / "prompts").resolve()
         prompt_log_dir.mkdir(parents=True, exist_ok=True)
@@ -266,6 +274,7 @@ class EvaluationOrchestrator:
                     prompt_logger=self.prompt_logger,
                     dim_mode="gk",
                     low_freq_only=self.use_low_freq_only,  # [2026-01 Added] Low-frequency mode
+                    aggregation_policy=self.pedagogical_aggregation_policy,
                 )
                 print(f"[EvaluationOrchestrator] GK pedagogical evaluation module initialized (low_freq_only={self.use_low_freq_only})")
 
@@ -276,6 +285,7 @@ class EvaluationOrchestrator:
                     prompt_logger=self.prompt_logger,
                     dim_mode="cs",
                     low_freq_only=self.use_low_freq_only,  # [2026-01 Added] Low-frequency mode
+                    aggregation_policy=self.pedagogical_aggregation_policy,
                 )
                 print(f"[EvaluationOrchestrator] CS pedagogical evaluation module initialized (low_freq_only={self.use_low_freq_only})")
 
@@ -284,6 +294,74 @@ class EvaluationOrchestrator:
                 self.pedagogical_eval = self.pedagogical_eval_gk
             elif self.pedagogical_eval_cs:
                 self.pedagogical_eval = self.pedagogical_eval_cs
+
+    def _resolve_generation_model_name(self) -> Optional[str]:
+        """Resolve the Stage1 generation model used for evaluator-family filtering."""
+        run_mode = str(getattr(self.config, "run_mode", "") or "").lower()
+        explicit_stage1_model = getattr(self.config, "stage1_generation_model", None)
+        if run_mode == "stage2-only":
+            text = str(explicit_stage1_model or "").strip()
+            return text if text and text.lower() not in {"unknown", "none", "n/a"} else None
+
+        for candidate in (
+            explicit_stage1_model,
+            getattr(getattr(self.config, "llm", None), "model_name", None),
+            getattr(getattr(getattr(self.llm_router, "config", None), "generator_model", None), "model_name", None),
+        ):
+            text = str(candidate or "").strip()
+            if text and text.lower() not in {"unknown", "none", "n/a"}:
+                return text
+        return None
+
+    def _should_enable_model_family_filter(self) -> bool:
+        """Baseline/original-question evaluation has no generation model to exclude."""
+        run_mode = str(getattr(self.config, "run_mode", "") or "").lower()
+        if run_mode == "baseline" or bool(getattr(self.config, "is_baseline", False)):
+            return False
+        return bool(self.generation_model_name)
+
+    def _apply_model_family_decoupling(self) -> None:
+        """
+        Remove Stage2 evaluator models from the same family as the Stage1 generator.
+
+        The remaining model weights are renormalized. If two evaluators remain,
+        pedagogical aggregation uses strict two-model consensus.
+        """
+        original_weights = dict(self.eval_model_weights or {})
+        active_clients, filter_result = filter_models_by_generator_family(
+            self.eval_clients,
+            model_name_getter=lambda client: getattr(client, "model_name", ""),
+            generator_model=self.generation_model_name,
+            enable_filter=self._should_enable_model_family_filter(),
+        )
+
+        if filter_result.enabled and not active_clients:
+            raise ValueError(
+                "No Stage2 evaluation models remain after excluding models from "
+                f"the generation model family ({filter_result.generator_family}). "
+                "Configure at least one evaluator from another model family."
+            )
+
+        self.eval_clients = active_clients
+        self.eval_model_names = [client.model_name for client in self.eval_clients]
+        self.eval_model_weights = normalize_weights_for_models(self.eval_model_names, original_weights)
+        self.default_llm_client = self.eval_clients[0] if self.eval_clients else None
+
+        self.model_family_filter = filter_result.to_dict()
+        self.model_family_filter["model_weights"] = dict(self.eval_model_weights)
+        self.pedagogical_aggregation_policy = (
+            "two_model_consensus"
+            if filter_result.exclusion_applied and len(self.eval_model_names) == 2
+            else "majority"
+        )
+
+        if filter_result.exclusion_applied:
+            print("[EvaluationOrchestrator] Stage2 model-family decoupling applied:")
+            print(f"  - Generation model: {filter_result.generator_model} (family={filter_result.generator_family})")
+            print(f"  - Excluded eval models: {filter_result.excluded_models}")
+            print(f"  - Active eval models: {self.eval_model_names}")
+            if len(self.eval_model_names) == 2:
+                print("  - Pedagogical aggregation: two-model consensus (both models must hit)")
 
     def _parse_eval_mode(self) -> None:
         """
@@ -361,6 +439,7 @@ class EvaluationOrchestrator:
 
         # Evaluation model group: based on orchestrator initialization (LLMRouter/config single source)
         state.eval_models = list(getattr(self, "eval_model_names", None) or [])
+        state.model_family_filter = dict(getattr(self, "model_family_filter", {}) or {})
 
         # --- Unified extraction of core + stage1_meta (if any) ---
         core = None
@@ -1183,7 +1262,8 @@ class EvaluationOrchestrator:
                     "ai_eval_models": list(getattr(state, "ai_eval_model_names", None) or []),
                     "ped_eval_models": list(getattr(state, "ped_eval_model_names", None) or []),
                     "model_weights": model_weights,
-                    "weight_explanation": "Model weights used for aggregating multi-model scores, higher weight has greater impact on final score"
+                    "model_family_filter": dict(getattr(state, "model_family_filter", {}) or {}),
+                    "weight_explanation": "Model weights are renormalized after excluding evaluator models from the generation model family."
                 },
 
                 "skipped_modules": list(getattr(state, "skipped_modules", None) or []),

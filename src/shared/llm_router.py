@@ -9,12 +9,12 @@ Design Principles:
 1. All Agents and evaluation modules must obtain LLMClient from Router, not create them directly
 2. Single control point: switching models only requires modifying api_config.py
 3. Stage 1 (generation) and Stage 2 (evaluation) use different models and parameters
-4. Stage 2 dual evaluation system shares the same fixed three-model evaluator
+4. Stage 2 dual evaluation system shares the same configured evaluator group
 
 Configuration Method - 2025-12 Update:
 All API configs are centralized in src/shared/api_config.py:
 - STAGE1_CONFIG: Generation stage config (select one model for experiment)
-- STAGE2_CONFIG: Evaluation stage config (fixed three-model via DMX interface)
+- STAGE2_CONFIG: Evaluation stage config and network route
 
 Users only need to modify api_config.py, no environment variables needed.
 
@@ -28,7 +28,7 @@ router = LLMRouter.from_config(experiment_config)
 # Get generation model
 gen_client = router.get_generator_client()
 
-# Get evaluation model group (fixed three-model)
+# Get evaluation model group
 eval_clients = router.get_eval_clients()
 ```
 """
@@ -126,7 +126,7 @@ class LLMRouterConfig:
     Field Description:
     - generator_model: Main generation model (used by Agent 2/3/4/5)
     - helper_model: Helper model (JSON repair, compression, etc.)
-    - eval_models: Evaluation model group (fixed three-model, shared by Stage 2 dual evaluation)
+    - eval_models: Evaluation model group shared by Stage 2 dual evaluation
 
     Config Source:
     All configs are read from src/shared/api_config.py, users only need to modify that file.
@@ -187,7 +187,7 @@ class LLMRouter:
     Responsibilities:
     1. Manage lifecycle of all LLM clients
     2. Provide unified client access interface
-    3. Ensure Stage 2 dual evaluation system uses the same three-model group
+    3. Ensure Stage 2 dual evaluation system uses the same evaluator group
 
     Thread Safety:
     Current implementation is a singleton variant, each Router instance manages independent client pool.
@@ -326,14 +326,15 @@ class LLMRouter:
 
     def get_eval_clients(self) -> List[LLMClient]:
         """
-        Get evaluation model group (fixed three-model)
+        Get evaluation model group
 
         Important:
-        Stage 2 AI-centric and Pedagogical evaluation must use the same three-model group.
-        This method returns a fixed client list to ensure both evaluation systems use exactly the same models.
+        Stage 2 AI-centric and Pedagogical evaluation use the same configured
+        client list. EvaluationOrchestrator may filter this list to decouple
+        evaluator families from the Stage1 generation model.
 
         Returns:
-            List[LLMClient]: Evaluation model client list (fixed length, usually 3)
+            List[LLMClient]: Evaluation model client list
         """
         return self._get_eval_clients()
 
